@@ -175,6 +175,7 @@ def main():
     print(faults)
 
 
+    features = scaler.fit_transform(features)
     scores = cross_val_score(estimator=ensLearner, X=features, y=targets, cv=kf, n_jobs=4)
     print("Cross_val_scores: \n %s" % scores)
     print("Mean "+str(np.mean(scores))+", std "+str(np.std(scores)))
