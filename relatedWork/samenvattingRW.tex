@@ -1,0 +1,68 @@
+\documentclass[12pt]{article}
+
+\usepackage[margin=1in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb,amsfonts}
+ 
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+ 
+\newenvironment{problem}[2][Problem]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}\hskip \labelsep {\bfseries #2.}]}{\end{trivlist}}
+%If you want to title your bold things something different just make another thing exactly like this but replace "problem" with the name of the thing you want, like theorem or lemma or whatever
+ 
+\begin{document}
+ 
+%\renewcommand{\qedsymbol}{\filledbox}
+%Good resources for looking up how to do stuff:
+%Binary operators: http://www.access2science.com/latex/Binary.html
+%General help: http://en.wikibooks.org/wiki/LaTeX/Mathematics
+%Or just google stuff
+ 
+\title{Homework template}
+\author{Author}
+\maketitle
+
+\section{Legend}
+Every paper will ask 4 question.
+The questions are:
+\begin{enumerate}
+
+    \item What is the paper about.
+    \item What is the papers contribution.
+    \item Differences with our work.
+    \item What we do more in our work.
+
+\end{enumerate}
+
+\section{Rodrigues}
+\begin{enumerate}
+    \item A mape-k loop is used along with UPPAAL model checking (activforms), where UPPAAL is helped by classification to create UPPAALS prediction models faster and cheaper.
+    \item Faster activforms.
+    \item In our work, we use classification to send a subset of adaptations to the model checker, while this work helps create models faster.
+    \item Instead of speeding up model checking, we restrict its work.
+\end{enumerate}
+See p1 on the bottemright.
+
+\section{Duarte}
+\begin{enumerate}
+    \item Combines implements mape-k with online k-plane (unsupervised learning/ clustering) to also produce humar readable output.
+    \item Found a way to create non-human (= non hardcoded and flexible) knowledge but still make it human readable.
+    \item No model checking and focus is on clarity instead of performance.
+    \item Improve performance instead of clarity.
+\end{enumerate}
+
+\section{Schmid}
+\begin{enumerate}
+    \item Replaces explicit pre-build models for model checking with constructing it simpler and changing at runtime using RTX.
+    \item See above.
+    \item No use of mape-k or SMC, but a whole different model.
+    \item Subjective because of the enormous difference.
+\end{enumerate}
+
+\section{Bencomo}
+\begin{enumerate}
+    \item 
+
+
+
+\end{document}
