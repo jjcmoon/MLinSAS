@@ -61,8 +61,84 @@ See p1 on the bottemright.
 
 \section{Bencomo}
 \begin{enumerate}
-    \item 
+    \item Proposes to use bayesian networks to better deal with uncertainty in SAS.
+    \item A way to adapt which is more rigid against uncertainty.
+    \item While it is also uses some form of AI (I think), no model checking or explicit mape-k is mentioned.
+    \item Statistical model checking
+\end{enumerate}
 
+\section{Filieri}
+\begin{enumerate}
+    \item The uses of dynamic binding with control theory under the hood to achieve QoS in SAS.
+    \item A lightweight way to predict QoS adaptations.
+    \item We use a different way to select adaptations.
+    \item Model checking and ML.
+\end{enumerate}
 
+\section{Potter}
+\begin{enumerate}
+    \item The IoT network growing rate.
+    \item A way to abstract and automatically add devices to a network using ContQuest.
+    \item We focus on IoT network performance instead of structures.
+    \item QoS guarantees.
+\end{enumerate}
+
+\section{Mehta}
+\begin{enumerate}
+    \item 5G and IoT making a demand for new strict low latency applications.
+    \item Keeping latency and power and speed low with SIAA\_G and SIAA\_G\_LUR algorithms.
+    \item Adapting.
+    \item Using mape-k, ml and model checking.
+\end{enumerate}
+
+\section{Yang}
+\begin{enumerate}
+    \item Networks of entities with tasks.
+    \item A learning algorithm to fullfill an entities tasks.
+    \item This work does not talk about SAS, but about something resembling an IoT system. 
+        They also wrote their own learning algorithm for "distributed" learning.
+    \item Explicit structuring and model selection.
+\end{enumerate}
+
+\section{Nguyen}
+\begin{enumerate}
+    \item Non-lineair controlling systems.
+    \item Applying neural network where the analytical solutions fail due to non-linearity.
+    \item The problem is a task instead of maintaining a system.
+    \item See above.
+\end{enumerate}
+
+\section{Ghahremani}
+\begin{enumerate}
+    \item Predicting models to give to MADP to use.
+    \item Uses supervised learning to learn prediction models to feed to MADP with little system info.
+    \item Learns the models instead of adaptations.
+    \item The machine learner and model checker work seperately.
+\end{enumerate}
+
+\section{Kim}
+\begin{enumerate}
+    \item Trying to make SAS which does not use fixed rules to predict.
+    \item Applying Reinforcement learning to select adaptation.
+    \item We do not exclusively rely on machine learning.
+    \item Statistical model checking as has the final say with us.
+\end{enumerate}
+Could be very interesting for Jaron.
+
+\section{Andrade}
+\begin{enumerate}
+    \item The difficulty of modelling system to be able to use with feedback control loops.
+    \item DuSE: a way to represent you system more easily along with a search algorithm to search adaptations.
+    \item We work on the well established mape-k, while this paper tries to start from scratch.
+    \item Improve on previous work.
+\end{enumerate}
+
+\section{Zeller}
+\begin{enumerate}
+    \item 2 new approaches to selecting adaptations.
+    \item A way to formulate goals in transition constraints and achieving good results by applying constraint solving to it (AI). Another approach was also studied but scaled badly.
+    \item We do not exclusively use AI and a different form.
+    \item Combining learning with statistical model checking.
+\end{enumerate}
 
 \end{document}
