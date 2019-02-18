@@ -213,7 +213,8 @@ public class Mote extends Node {
 				int rand = (int) Math.round(Math.random() * totalDistribution);
 				int countDistribution = 0;
 				for (Link link : possibleLinks) {
-					countDistribution += link.getDistribution();
+                    countDistribution += link.getDistribution();
+                    // This part assumes that the mote has a maximum of 2 outgoing links
 					if (countDistribution >= rand) {
 						sendPacketOver(link, packet, runInfo);
 						break;
@@ -243,14 +244,17 @@ public class Mote extends Node {
 		packetQueue = queue;
 
 		// Calculate receiving battery
-		if (totalDistribution > 100) {
-			for (Link link : links) {
-				link.getTo().calcualtePacketReceiveBatteryConsumption(timeSlots);
-			}
-		} else {
-			if (links.size() > 0)
-				links.get(0).getTo().calcualtePacketReceiveBatteryConsumption(timeSlots);
-		}
+		// TODO: make sure this is the correct behaviour
+		links.forEach(link -> link.getTo().calculatePacketReceiveBatteryConsumption(timeSlots));
+		// if (totalDistribution > 100) {
+		// 	for (Link link : links) {
+		// 		link.getTo().calcualtePacketReceiveBatteryConsumption(timeSlots);
+		// 	}
+		// } else {
+		// 	if (links.size() > 0) {
+		// 		links.get(0).getTo().calcualtePacketReceiveBatteryConsumption(timeSlots);
+		// 	}
+		// }
 	}
 
 	public int getQueueLoss() {
@@ -310,7 +314,7 @@ public class Mote extends Node {
 	}
 
 	@Override
-	void calcualtePacketReceiveBatteryConsumption(int timeSlots) {
+	void calculatePacketReceiveBatteryConsumption(int timeSlots) {
 		assert links.size() >= 1;
 
 		double batteryUsage = timeSlots * DomainConstants.receptionTime

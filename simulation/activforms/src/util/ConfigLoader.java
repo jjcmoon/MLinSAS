@@ -1,19 +1,22 @@
 package util;
 
-import smc.SMCConnector;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+
+import mapek.Goal;
+import smc.runmodes.SMCConnector;
 
 /**
  * Class Used to load the properties listed in the SMCConfig.properties file.
  */
 public class ConfigLoader {
 
-	private static String configFileLocation = Paths.get(System.getProperty("user.dir"), "SMCConfig.properties").toString();
+	public static final String configFileLocation = Paths.get(System.getProperty("user.dir"), "SMCConfig.properties").toString();
 	private static ConfigLoader instance = null;
 	private Properties properties;
 
@@ -31,12 +34,18 @@ public class ConfigLoader {
 			InputStream inputStream = new FileInputStream(configFileLocation);
 			properties.load(inputStream);
 		} catch (IOException e) {
-			throw new RuntimeException("Could not load the properties file correctly.");
+			throw new RuntimeException(String.format("Could not load the properties file correctly at location %f.", configFileLocation.toString()));
 		}
 	}
 
-	private String getProperty(String key) {
-		return properties.getProperty(key);
+	public String getProperty(String key) {
+		String property = properties.getProperty(key);
+		if (property != null) {
+			return property.trim();
+		} else {
+			throw new RuntimeException(
+				String.format("Property '%f' not found in the properties file. Make sure this property is provided.", key));
+		}
 	}
 
 	public int getAmountOfLearningCycles() {
@@ -51,6 +60,14 @@ public class ConfigLoader {
 		return Integer.parseInt(this.getProperty("distributionGap"));
 	}
 
+	public double getExplorationPercentage() {
+		return Double.parseDouble(this.getProperty("explorationPercentage"));
+	}
+
+	public int getTimeCap() {
+		return Integer.parseInt(this.getProperty("cappedVerificationTime"));
+	}
+
 	public SMCConnector.Mode getRunMode() {
 		return SMCConnector.Mode.getMode(this.getProperty("runMode").toLowerCase());
 	}
@@ -59,8 +76,32 @@ public class ConfigLoader {
 		return SMCConnector.TaskType.getTaskType(this.getProperty("taskType").toLowerCase());
 	}
 
-	public boolean getHuman()
-	{
-		return this.getProperty("human").toLowerCase().trim().equals("true");
+	public String getSimulationNetwork() {
+		return this.getProperty("simulationNetwork");
 	}
+
+	public boolean getHuman() {
+		return this.getProperty("human").toLowerCase().equals("true");
+	}
+
+	public boolean shouldDeletePreviousModels() {
+		return this.getProperty("deletePreviousModels").toLowerCase().equals("true");
+	}
+	
+	public List<Goal> getGoals() {
+		List<Goal> goals = new ArrayList<>();
+
+		String targets[] = this.getProperty("targets").split(",");
+		String thressholds[] = this.getProperty("thressholds").split(",");
+		String operators[] = this.getProperty("operators").split(",");
+
+		for (int i = 0; i < targets.length; i++) {
+			goals.add(new Goal(
+				targets[i].trim(), operators[i].trim(), Double.parseDouble(thressholds[i].trim())));
+		}
+		return goals;
+	}
+
 }
+
+

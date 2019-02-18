@@ -4,9 +4,7 @@
 
 package smc;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,29 +18,18 @@ import mapek.Qualities;
 
 public class SMCChecker {
 
-	String configFilePath;
 
-	// Linux or mac
-	// THis program does not work for  windows because of problems with spaces in path and .exe at the end and....
 	public static String command = Paths
 			.get(System.getProperty("user.dir"), "uppaal-verifyta", "verifyta -a %f -E %f -u %s").toString();
 
-
-	public static String DEFAULT_CONFIG_FILE_PATH = Paths.get(System.getProperty("user.dir"), "SMCConfig.properties")
-			.toString();
 
 	SMCModelLoader modelLoader;
 
 	// The models send to the binary
 	List<SMCModel> models;
 
-	public SMCChecker(String configPath) {
-		this.configFilePath = configPath;
-		modelLoader = new SMCModelLoader(configPath);
-	}
-
 	public SMCChecker() {
-		this(DEFAULT_CONFIG_FILE_PATH);
+		modelLoader = new SMCModelLoader();
 	}
 
 	ExecutorService cachedPool = Executors.newCachedThreadPool();
@@ -51,44 +38,9 @@ public class SMCChecker {
 		return models;
 	}
 
-	/*
-	 * This is the same as the call function in the ExecuteCommand.java
-	 * Reference: http://www.mkyong.com/java/how-to-execute-shell-command-from-java/
-	 */
-	@SuppressWarnings("unused")
-	private static String executeCommand(String command) {
-
-		StringBuffer output = new StringBuffer();
-
-		Process p;
-		try {
-
-			p = Runtime.getRuntime().exec(command);
-			p.waitFor();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			BufferedReader errorReader = new BufferedReader(new InputStreamReader(p.getErrorStream()));
-
-			String line = "";
-			while ((line = reader.readLine()) != null) {
-				output.append(line + "\n");
-			}
-
-			if (output.length() == 0) {
-				while ((line = errorReader.readLine()) != null) {
-					output.append(line + "\n");
-				}
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace(System.out);
-		}
-
-		return output.toString();
-	}
 
 	public static String getCommand(String modelPath, double alpha, double epsilon) {
 		String cmd = String.format(command, alpha, epsilon, modelPath);
-		//System.out.println(cmd);
 		return cmd;
 	}
 
@@ -167,11 +119,13 @@ public class SMCChecker {
 		return value;
 	}
 
-	// // (model.getModel(), cao, env)
-	// the getModel is the file of the model in the models folder,
-	// read in as bytes to a string
-	// so this should not change anything to the key of the model
-	// which is important for me later
+	/**
+	 * Change the configuration in the quality model (string previously read from file).
+	 * @param file the content of the quality model file.
+	 * @param cao the system (motes and their links, loads, ...).
+	 * @param env the environment (moteloads, SNR's of links).
+	 * @return the quality model with changed configuration.
+	 */
 	static String changeCAO(String file, String cao, String env) {
 
 		String startText = "//&lt;Configuration&gt;";
@@ -206,8 +160,6 @@ public class SMCChecker {
 	}
 
 
-	//TODO: VERY IMPORTANT FUNCTION
-	// so this should be the model checker
 	public void checkCAO(String adaptationOption, String environment, Qualities verificationResults) {
 
 		// loads and updates the models and their values specified in the SMCConfig.properties
@@ -239,8 +191,9 @@ public class SMCChecker {
 			// Retrieve the results for the different qualities, dependent on the model type (simulation or probability)
 			switch (quality) {
 				case "latency":
+					// In case of latency, the returned value for simulation is still a percentage
 					verificationResults.latency = simType == ModelType.SIMULATION ?
-						getSimulatedValue(values[1]) : getProbability(values[1]) * 100;
+						getSimulatedValue(values[1]) * 100 : getProbability(values[1]) * 100;
 					break;
 				case "energyConsumption":
 					verificationResults.energyConsumption = simType == ModelType.SIMULATION ?
@@ -255,9 +208,7 @@ public class SMCChecker {
 	}
 
 	public void setInitialData(String cao, String env, Qualities verificationResults) {
-		// cao is the adaption option
-
-
+		// cao is the current adaption option
 		models = new LinkedList<>();
 		try {
 
@@ -266,8 +217,7 @@ public class SMCChecker {
 			for (SMCModel model : modelsLoadedFromProperties) {
 
 				// updates the model to include 
-				// some information about the adaption option and the environmetn (noise and load).
-				// I do not know why it is added or what.
+				// some information about the adaption option and the environment (noise and load).
 				if (model.getKey().equals("packetLoss") || model.getKey().equals("energyConsumption") || model.getKey().equals("latency")) {
 					String updatedModel = changeCAO(model.getModel(), cao, env);
 					Files.write(Paths.get(model.getPath()), updatedModel.getBytes(Charset.defaultCharset()));

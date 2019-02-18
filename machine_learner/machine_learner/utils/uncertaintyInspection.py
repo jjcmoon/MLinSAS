@@ -6,34 +6,10 @@ import functools
 import sys
 import os
 import shutil
-from dataLoader import *
+from dataLoader import loadData
+from printUtils import printProgressBar
 
 PLOT_OUTPUT_DIR = ''
-
-
-def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-
-    Reference: https://stackoverflow.com/a/34325723
-    """
-    percent = 100 * (iteration / float(total))
-    percentStr = f'{percent:.1f}'
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percentStr, suffix), end = '\r')
-    # Print New Line on Complete
-    if iteration == total: 
-        print()
-
 
 
 
@@ -50,12 +26,12 @@ def analyseUncertainties():
     minEC, maxEC = min(ecResults), max(ecResults)
 
     # sort the items of interest in ascending order
-    sortFunction = lambda x, y: -1 if x.getScatterRate() < y.getScatterRate() else (0 if x.getScatterRate() == y.getScatterRate() else 1)
-    worstScatterRate = sorted([result for result in adapResults], key=functools.cmp_to_key(sortFunction), reverse=False)
+    # sortFunction = lambda x, y: -1 if x.getScatterRate() < y.getScatterRate() else (0 if x.getScatterRate() == y.getScatterRate() else 1)
+    # worstScatterRate = sorted([result for result in adapResults], key=functools.cmp_to_key(sortFunction), reverse=False)
 
 
     # sortFunction = lambda x, y: -1 if x.getAmtOfWrongPredictions() < y.getAmtOfWrongPredictions() else (0 if x.getAmtOfWrongPredictions() == y.getAmtOfWrongPredictions() else 1)
-    worstPredictionRate = sorted([result for result in adapResults], key=lambda res: res.getAmtOfWrongPredictions()[0], reverse=True)
+    # worstPredictionRate = sorted([result for result in adapResults], key=lambda res: res.getAmtOfWrongPredictions()[0], reverse=True)
     print()
 
 
@@ -67,19 +43,20 @@ def analyseUncertainties():
     for i in range(5):
         pass
         # plotRegressionPredictions(worstScatterRate[i], minEC, maxEC, f'worstScatter{i+1}')
-        plotLearningEvolution(worstScatterRate[i], minEC, maxEC, f'worstScatter{i+1}')
+        # plotLearningEvolution(worstScatterRate[i], minEC, maxEC, f'worstScatter{i+1}')
         # plotEffectUncertainties(worstScatterRate[i], f'worstScatter{i+1}')
         # plotLearningEffectOneCycle(worstScatterRate[i], minEC, maxEC, f'worstScatter{i+1}')
         # plotLearningEffect2Cycles(worstScatterRate[i], minEC, maxEC, f'worstScatter{i+1}')
-        printProgressBar(i+1, 5, prefix="Progress worst scatter rates:", suffix='Complete', length=30)
+        # printProgressBar(i+1, 5, prefix="Progress worst scatter rates:", suffix='Complete', length=30)
 
 
     # Plots for the 20 adaptation options with the worst predictions
     for i in range(20):
+        pass
         # print(f"Error rate configuration {i+1}: {worstPredictionRate[i].getAmtOfWrongPredictions()}")
-        plotLearningEvolution(worstPredictionRate[i], minEC, maxEC, f'worstPrediction{i+1}')
+        # plotLearningEvolution(worstPredictionRate[i], minEC, maxEC, f'worstPrediction{i+1}')
         # plotEffectUncertainties(worstPredictionRate[i], f'worstPrediction{i+1}')
-        printProgressBar(i+1, 20, prefix="Progress worst prediction graphs:", suffix='Complete', length=30)
+        # printProgressBar(i+1, 20, prefix="Progress worst prediction graphs:", suffix='Complete', length=30)
 
     # Plots for adaptationOptions which have at most 100 samples more on either side of the cutoff line in comparison to the other side
     filteredOptions = list(filter(lambda x: x.getScatterRate() <= 100, adapResults))
@@ -88,9 +65,10 @@ def analyseUncertainties():
         # plotLearningEvolution(filteredOptions[i], minEC, maxEC, f'filtered{i+1}')
     
     # Plots for all adaptation options
-    # for i in range(len(adapResults)):
-    #     plotLearningEvolution(adapResults[i], minEC, maxEC, f'all{i+1}')
-    #     printProgressBar(i+1, len(adapResults), prefix="Progress all graphs:", suffix='Complete', length=30)
+    for i in range(len(adapResults)):
+        plotRegressionPredictions(adapResults[i], minEC, maxEC, f'all{i+1}')
+        plotLearningEvolution(adapResults[i], minEC, maxEC, f'all{i+1}')
+        printProgressBar(i+1, len(adapResults), prefix="Progress all graphs:", suffix='Complete', length=30)
 
 
 
@@ -101,7 +79,7 @@ def plotLearningEffectOneCycle(item, minEC, maxEC, graphName):
     dataRegression = [ao.reB for ao in item]
     minPL, maxPL = getMinMax(dataPacketLoss, dataRegression)
 
-    fig = initialiseFigure('Effect of online learning adjustments', fontsize=20)
+    initialiseFigure('Effect of online learning adjustments', fontsize=20)
     
     step = int((len(item)-1) / 6)
     for i in range(step, len(item), step):
@@ -127,7 +105,7 @@ def plotLearningEffect2Cycles(item, minEC, maxEC, graphName):
     dataRegression = [ao.reB for ao in item[0:60]]
     minPL, maxPL = getMinMax(dataPacketLoss, dataRegression)
 
-    fig = initialiseFigure('Effect of online learning adjustments over 2 cycles', fontsize=20)
+    initialiseFigure('Effect of online learning adjustments over 2 cycles', fontsize=20)
     
     # chosen arbitrarily
     # TODO use heuristic to find interesting points
@@ -184,7 +162,7 @@ def plotEffectUncertainties(item, graphName):
     dataEnergyConsumption = [ao.ec for ao in item[0:60]]
     minEC, maxEC = min(dataEnergyConsumption), max(dataEnergyConsumption)
 
-    fig = initialiseFigure('Effect of uncertainties on adaptation option')
+    initialiseFigure('Effect of uncertainties on adaptation option')
 
     # Plot 10 data points per graph
     for i in range(6):
@@ -219,7 +197,7 @@ def plotRegressionPredictions(item, minEC, maxEC, graphName):
     dataRegression = [ao.reB for ao in item]
     minPL, maxPL = getMinMax(dataPacketLoss, dataRegression)
 
-    fig = initialiseFigure('Regression predictions vs actual values (single configuration)')
+    initialiseFigure('Regression predictions vs actual values (single configuration)')
 
     #plot the result which is spread out the most over energy consumption
     plt.subplot(2, 2, 1)
@@ -280,7 +258,7 @@ def plotLearningEvolution(item, minEC, maxEC, graphName):
     minPL, maxPL = getMinMax(dataPacketLoss, dataRegression)
 
 
-    fig = initialiseFigure('Effect of online learning adjustments (1 configuration, regression)')
+    initialiseFigure('Effect of online learning adjustments (1 configuration, regression)')
 
     step = int(len(item) / 3)
     for i in range(6):
@@ -400,18 +378,15 @@ def initialiseFigure(title, fontsize=18, res=(1920, 1080), dpi=96):
 
 
 if __name__ == '__main__':
-    # NOTE: this program removes all files from the provided/default folder recursively
-    #       -> be careful when providing a custom directory
-    
     if len(sys.argv) != 2:
         print("Output directory not provided as commandline argument, using './GraphOutputs' by default")
         PLOT_OUTPUT_DIR = os.path.join('GraphOutputs')
     else:
         PLOT_OUTPUT_DIR = sys.argv[1]
 
-    if os.path.isdir(PLOT_OUTPUT_DIR):
-        shutil.rmtree(PLOT_OUTPUT_DIR)
+    # if os.path.isdir(PLOT_OUTPUT_DIR):
+    #     shutil.rmtree(PLOT_OUTPUT_DIR)
 
-    os.mkdir(PLOT_OUTPUT_DIR)
+    # os.mkdir(PLOT_OUTPUT_DIR)
 
     analyseUncertainties()

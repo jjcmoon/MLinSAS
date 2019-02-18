@@ -6,6 +6,8 @@ import java.util.List;
 public class Mote {
 	int moteId;
 	double energyLevel;
+	int load;
+	int queueSize;
 
 	List<Link> links = new LinkedList<>();
 
@@ -29,6 +31,8 @@ public class Mote {
 		Mote mote = new Mote();
 		mote.moteId = this.moteId;
 		mote.energyLevel = this.energyLevel;
+		mote.load = this.load;
+		mote.queueSize = this.queueSize;
 
 		for (Link link : links) {
 			mote.links.add(link.getCopy());
@@ -39,8 +43,8 @@ public class Mote {
 	public String getModelString() {
 		StringBuilder string = new StringBuilder();
 		string.append("\n{");
-		// {2, 10, 11744, 1, 0,
-		string.append(String.format("%d, 10, 11744, %d, 0,{", moteId, links.size()));
+		
+		string.append(String.format("%d, %d, 11744, %d, %d,{", moteId, load, links.size(), queueSize));
 		for (Link link : links) {
 			string.append(
 					String.format("{%d, %d, %d, %d},", link.source, link.destination, link.power, link.distribution));

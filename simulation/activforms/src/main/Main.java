@@ -22,14 +22,11 @@ public class Main {
 
 	public void start() {
 
-		// This starts a new thread where the main object is executed on.
 		new Thread(() -> {
-			// This is what effectively gets executed when you start the main
-
 			// Compile the list of SNREquations for all the links in the simulator
 			List<SNREquation> equations = new ArrayList<>();
 
-			// Firstly, assemble all the links in the simulator.
+			// Firstly, assemble all the links in the simulator
 			List<Link> links = simulator.getMotes().stream()
 				.map(Mote::getLinks)
 				.flatMap(List::stream)
@@ -49,49 +46,39 @@ public class Main {
 			feedbackLoop.setEffector(effector);
 			feedbackLoop.setEquations(equations);
 
-			// StartFeedback loop
+			// StartFeedback loop (this runs for the amount of cycles specified in the configuration)
 			feedbackLoop.start();
 
-			// See results
 			printResults();
 
 		}).start();
 	}
 
-	//TODO: what is this data dump exactly?
 	void printResults() {
 		// Get QoS data of previous runs
 		// probe.getNetworkQoS() should not have less number than the number of times
 		// feedback loop will run, e.g, feedback loop runs 5 times, this should have >=5
 		List<QoS> qosList = probe.getNetworkQoS(ConfigLoader.getInstance().getAmountOfCycles());
-		System.out.println("\nPacketLoss;EnergyConsumption");
+		System.out.println("\nPacketLoss;Latency;EnergyConsumption");
 		for (QoS qos : qosList) {
-			System.out.println(String.format("%f;%f", qos.getPacketLoss(), qos.getEnergyConsumption()));
+			System.out.println(String.format("%f;%f;%f", qos.getPacketLoss(), qos.getLatency(), qos.getEnergyConsumption()));
 		}
 	}
 
-	//DIT IS DE JAVA MAIN DIE GESTART WORD
 	public static void main(String[] args) {
-
-		// Creeer de main die zal worden uitgevoerd
 		Main ddaptation = new Main();
-
-		// Init de simulator. Dit start de simulator objecten en geeft het
-		// main object een probe en effector door
 		ddaptation.initializeSimulator();
-
-		// Je start de main in een nieuwe thread (zie hierboven)
 		ddaptation.start();
 	}
 
-	//Initialises a new simulator and probe
+	// Initialises a new simulator and probe
 	public void initializeSimulator() {
-
+		String simulationNetwork = ConfigLoader.getInstance().getSimulationNetwork();
+		
 		// Start a completely new sim
-		SimulationClient client = new SimulationClient();
+		SimulationClient client = new SimulationClient(simulationNetwork);
 
-		// assign a new probe, effector and simulator to the main object.
-		// Variabelen direct aangesproken
+		// Assign a new probe, effector and simulator to the main object.
 		probe = client.getProbe();
 		effector = client.getEffector();
 		simulator = client.getSimulator();
