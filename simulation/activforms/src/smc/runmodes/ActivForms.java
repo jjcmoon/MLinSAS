@@ -36,7 +36,8 @@ public class ActivForms extends SMCConnector {
 
 			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
 				adaptationOption.verificationResults);
-				
+			adaptationOption.isVerified = true;
+			
 			verifTimes[index] = System.currentTimeMillis() - startTime;
 			index++;
 		}

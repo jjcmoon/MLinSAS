@@ -9,11 +9,15 @@ public class AdaptationOption {
 	// Index used to track the adaptation option (in the overall list of options)
 	public int overallIndex;
 
+	// Boolean which indicates if this option is verified
+	public boolean isVerified = false;
+
 	protected AdaptationOption getCopy() {
 		AdaptationOption newOption = new AdaptationOption();
 		newOption.system = system.getCopy();
 		newOption.verificationResults = verificationResults.getCopy();
 		newOption.overallIndex = overallIndex;
+		newOption.isVerified = isVerified;
 		return newOption;
 	}
 

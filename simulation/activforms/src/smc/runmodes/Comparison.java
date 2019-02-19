@@ -72,6 +72,7 @@ public class Comparison extends SMCConnector {
 			long startTime = System.currentTimeMillis();
 			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
 				adaptationOption.verificationResults);
+			adaptationOption.isVerified = true;
 			verifTimes.add(System.currentTimeMillis() - startTime);
 
 			adjInspection.getJSONArray("packetLoss").put(adaptationOption.verificationResults.packetLoss);
@@ -226,6 +227,7 @@ public class Comparison extends SMCConnector {
 			Long startTime = System.currentTimeMillis();
 			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
 				adaptationOption.verificationResults);
+			adaptationOption.isVerified = true;
 			verifTimes.add(System.currentTimeMillis() - startTime);
 
 			adjInspection.getJSONArray("packetLoss").put(adaptationOption.verificationResults.packetLoss);
@@ -316,8 +318,6 @@ public class Comparison extends SMCConnector {
 		List<Integer> indicesMain = new ArrayList<>();
 		// The indices for the options which are considered for exploration
 		List<Integer> indicesSub = new ArrayList<>();
-		// The remaining indices which should not be considered
-		List<Integer> remainingIndices = new ArrayList<>();
 
 		if (predictionsInClass[3] > 0) {
 			// There is at least one option which satisfies both goals
@@ -327,8 +327,6 @@ public class Comparison extends SMCConnector {
 					indicesMain.add(i);
 				} else if (prediction == 2 || prediction == 1) {
 					indicesSub.add(i);
-				} else {
-					remainingIndices.add(i);
 				}
 			}
 		} else if (predictionsInClass[2] + predictionsInClass[1] > 0) {
@@ -356,7 +354,6 @@ public class Comparison extends SMCConnector {
 		
 		// Only select a percentage of the predictions of the other classes
 		int subIndex = (int) Math.floor(indicesSub.size() * explorationPercentage);
-		remainingIndices.addAll(indicesSub.subList(subIndex, indicesSub.size()));
 		indicesSub = indicesSub.subList(0, subIndex);
 		
 		List<Integer> overallIndices = new ArrayList<>();

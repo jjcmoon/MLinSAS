@@ -43,7 +43,7 @@ public class FeedbackLoop {
 	// The overall adaptation options keeps track of all the encountered options so far
 	// Set<AdaptationOption> overallAdaptationOptions = new LinkedHashSet<>();
 
-	List<AdaptationOption> verifiedOptions;
+	List<AdaptationOption> verifiedOptions = new LinkedList<>();
 
 	// SMCConnector smcConnector = new SMCConnector();
 	SMCConnector smcConnector;
@@ -195,11 +195,12 @@ public class FeedbackLoop {
 		// fullfill the goals definied in the connector
 		smcConnector.verify();
 
-		// the connector changed the adaptionOptions of the feedbackloop directly,
-		// to the options it thinks will suffiece the goals
-		// verifiedOptions is also an argument of the feedbackloop object
-		// and should require a setter...
-		verifiedOptions = currentAdaptationOptions;
+		verifiedOptions.clear();
+		for (AdaptationOption option : currentAdaptationOptions) {
+			if (option.isVerified) {
+				verifiedOptions.add(option);
+			}
+		}
 
 		// Continue to the planning step.
 		planning();
@@ -250,11 +251,10 @@ public class FeedbackLoop {
 		// overallAdaptationOptions.addAll(currentAdaptationOptions);
 
 		// Update the indices of the adaptation options
-		// LinkedList<AdaptationOption> options = new LinkedList<>(overallAdaptationOptions);
 		for (int i = 0; i < currentAdaptationOptions.size(); i++) {
 			currentAdaptationOptions.get(i).overallIndex = i;
+			currentAdaptationOptions.get(i).isVerified = false;
 		}
-		// currentAdaptationOptions.forEach(o -> o.overallIndex = options.indexOf(o));
 	}
 
 	private void saveAdaptationOptions(AdaptationOption firstConfiguration, List<Mote> moteOptions, int moteId) {

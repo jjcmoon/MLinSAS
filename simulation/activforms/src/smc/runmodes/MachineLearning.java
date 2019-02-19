@@ -3,7 +3,6 @@ package smc.runmodes;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -56,11 +55,6 @@ public class MachineLearning extends SMCConnector {
 	private void training() {
 		// Formally verify all the adaptation options, and send them to the learners for training
 		int amtOptions = adaptationOptions.size();
-		List<Integer> verifiedOptions = new ArrayList<>();
-		List<Integer> unverifiedOptions = new ArrayList<>();
-		for (int i = 0; i < amtOptions; i++) {
-			unverifiedOptions.add(i);
-		}
 
 		AdaptationOption adaptationOption;
 		for (int i = 0; i < amtOptions; i++) {
@@ -74,16 +68,10 @@ public class MachineLearning extends SMCConnector {
 			adaptationOption = adaptationOptions.get(actualIndex);
 			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
 				adaptationOption.verificationResults);
-
-			verifiedOptions.add(actualIndex);
-			unverifiedOptions.remove(unverifiedOptions.indexOf(actualIndex));
+			adaptationOption.isVerified = true;
 		}
 
-		for (Integer i : unverifiedOptions) {
-			adaptationOptions.get(i).verificationResults.packetLoss = 100;
-		}
-
-		send(verifiedOptions.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), taskType, Mode.TRAINING);
+		send(adaptationOptions.stream().filter(o -> o.isVerified).collect(Collectors.toList()), taskType, Mode.TRAINING);
 	}
 
 
@@ -106,18 +94,15 @@ public class MachineLearning extends SMCConnector {
 		System.out.print(";" + adaptationSpace);
 
 		ArrayList<Float> predictions = new ArrayList<>();
-		List<AdaptationOption> qosEstimates = new LinkedList<>();
-
 		JSONArray arr = response.getJSONArray("predictions");
+
 		for (int i = 0; i < arr.length(); i++) {
 			predictions.add(Float.parseFloat(arr.get(i).toString()));
 		}
 		
-		Goal pl = goals.getPacketLossGoal();
-
 		// No exploration for single goal verification
 		List<Integer> overallIndices = new ArrayList<>();
-		List<Integer> remainingIndices = new ArrayList<>();
+		Goal pl = goals.getPacketLossGoal();
 
 		if (adaptationSpace != 0) {
 			for (int i = 0; i < adaptationOptions.size(); i++) {
@@ -127,8 +112,6 @@ public class MachineLearning extends SMCConnector {
 				
 				if (prediction) {
 					overallIndices.add(i);
-				} else {
-					remainingIndices.add(i);
 				}
 			}
 		} else {
@@ -137,9 +120,9 @@ public class MachineLearning extends SMCConnector {
 			}
 		}
 
+		// Fair distribution of options in case not all of them can be verified
 		Collections.shuffle(overallIndices);
 
-		int lastIndex = 0;
 		AdaptationOption option;
 
 		for (Integer index : overallIndices) {
@@ -149,21 +132,13 @@ public class MachineLearning extends SMCConnector {
 			option = adaptationOptions.get(index);
 			smcChecker.checkCAO(option.toModelString(), environment.toModelString(),
 				option.verificationResults);
-			qosEstimates.add(option);
-			lastIndex++;
-		}
-		
-		for (int i = lastIndex; i < overallIndices.size(); i++) {
-			adaptationOptions.get(overallIndices.get(i)).verificationResults.packetLoss = 100;
-		}
-
-		for (Integer i : remainingIndices) {
-			adaptationOptions.get(i).verificationResults.packetLoss = 100;
+			option.isVerified = true;
 		}
 
 		// Perform online learning on the samples that were predicted to meet the user goal
-		send(qosEstimates, taskType, Mode.TRAINING);
+		send(adaptationOptions.stream().filter(o -> o.isVerified).collect(Collectors.toList()), taskType, Mode.TRAINING);
 	}
+
 
 	private void testing2Goals() {
 		// Send the adaptation options to the learner with mode testing, returns the predictions of the learner
@@ -173,11 +148,9 @@ public class MachineLearning extends SMCConnector {
 		int adaptationSpace = Integer.parseInt(response.get("adaptation_space").toString());
 		System.out.print(";" + adaptationSpace);
 
-		ArrayList<Integer> predictions = new ArrayList<>();
-		List<AdaptationOption> qosEstimates = new LinkedList<>();
-
 		// The different prediction classes in case of 2 goals (latency & packet loss)
 		int[] amtPredClass = {0, 0, 0, 0};
+		ArrayList<Integer> predictions = new ArrayList<>();
 
 		switch (taskType) {
 			case PLLAMULTICLASS:
@@ -215,8 +188,6 @@ public class MachineLearning extends SMCConnector {
 		List<Integer> indicesMain = new ArrayList<>();
 		// The indices for the options which are considered for exploration
 		List<Integer> indicesSub = new ArrayList<>();
-		// The remaining indices which should not be considered
-		List<Integer> remainingIndices = new ArrayList<>();
 
 		if (amtPredClass[3] > 0) {
 			// There is at least one option which satisfies both goals
@@ -226,8 +197,6 @@ public class MachineLearning extends SMCConnector {
 					indicesMain.add(i);
 				} else if (prediction == 2 || prediction == 1) {
 					indicesSub.add(i);
-				} else {
-					remainingIndices.add(i);
 				}
 			}
 		} else if (amtPredClass[2] + amtPredClass[1] > 0) {
@@ -255,7 +224,6 @@ public class MachineLearning extends SMCConnector {
 		
 		// Only select a percentage of the predictions of the other classes
 		int subIndex = (int) Math.floor(indicesSub.size() * explorationPercentage);
-		remainingIndices.addAll(indicesSub.subList(subIndex, indicesSub.size()));
 		indicesSub = indicesSub.subList(0, subIndex);
 		
 		List<Integer> overallIndices = new ArrayList<>();
@@ -264,37 +232,20 @@ public class MachineLearning extends SMCConnector {
 
 		
 		AdaptationOption adaptationOption;
-		int lastIndex = 0;
 
 		for (Integer index : overallIndices) {
-			adaptationOption = adaptationOptions.get(index);
-
-			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
-				adaptationOption.verificationResults);
-
-			// Add this option to the list of options that should be sent back for online learning
-			qosEstimates.add(adaptationOption);
-
-			lastIndex++;
-
 			if (overTime) {
 				break;
 			}
+			
+			adaptationOption = adaptationOptions.get(index);
+			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
+				adaptationOption.verificationResults);
+			adaptationOption.isVerified = true;
 		}
-
-		// TODO maybe add a boolean in the adaptation option which indicates this
-		// If not all the (relevant) options were verified
-		for (int i = lastIndex; i < overallIndices.size(); i++) {
-			adaptationOptions.get(overallIndices.get(i)).verificationResults.packetLoss = 100;
-		}
-
-		for (Integer i : remainingIndices) {
-			adaptationOptions.get(i).verificationResults.packetLoss = 100;
-		}
-
 
 		// Perform online learning on the samples that were predicted to meet the user goal
-		send(qosEstimates, taskType, Mode.TRAINING);
+		send(adaptationOptions.stream().filter(o -> o.isVerified).collect(Collectors.toList()), taskType, Mode.TRAINING);
 	}
 
 }
