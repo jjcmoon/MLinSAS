@@ -27,7 +27,7 @@ public class FeedbackLoop {
 	
 	// Knowledge
 	public static final int DISTRIBUTION_GAP = ConfigLoader.getInstance().getDistributionGap();
-	public static final boolean human = ConfigLoader.getInstance().getHuman();
+	public static final boolean human = ConfigLoader.getInstance().timeInReadableFormat();
 	
 	Configuration currentConfiguration;
 	Configuration previousConfiguration;
@@ -464,7 +464,12 @@ public class FeedbackLoop {
 		if (steps.size() > 0) {
 			execution();
 		} else {
-			System.out.println(";" + System.currentTimeMillis());
+			if (ConfigLoader.getInstance().timeInReadableFormat()) {
+				LocalDateTime now = LocalDateTime.now();
+				System.out.println(String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond()));
+			} else {
+				System.out.println(";" + System.currentTimeMillis());
+			}
 		}
 	}
 
@@ -510,13 +515,10 @@ public class FeedbackLoop {
 
 		steps.clear();
 
-		// print current time, to be able to tell later how long everything took
-		LocalDateTime now;
-
-		if(!human) {
+		if (!human) {
 			System.out.print(";" + System.currentTimeMillis() + "\n");
 		} else {
-			now = LocalDateTime.now();
+			LocalDateTime now = LocalDateTime.now();
 			System.out.print("; " + String.format("%02d:%02d:%02d", 
 				now.getHour(), now.getMinute(), now.getSecond()) + "\n");
 		}

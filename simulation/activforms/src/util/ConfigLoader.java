@@ -80,8 +80,8 @@ public class ConfigLoader {
 		return this.getProperty("simulationNetwork");
 	}
 
-	public boolean getHuman() {
-		return this.getProperty("human").toLowerCase().equals("true");
+	public boolean timeInReadableFormat() {
+		return this.getProperty("readableTimeFormat").toLowerCase().equals("true");
 	}
 
 	public boolean shouldDeletePreviousModels() {
