@@ -97,13 +97,13 @@ The following settings can be changed:
 ---------------------------------------
 We recommend using VSCode (https://code.visualstudio.com/). We do not recommend any IDE (eclipse, intellij, etc.). VSCode has some plugins that we use in the development. They are not required to run the project. However, they can help you in the development.
     
-    - For docker: https://marketplace.visualstudio.com/items?itemName=PeterJausovec.vscode-docker
-    
-    - For java: https://marketplace.visualstudio.com/items?itemName=redhat.java
-    
-    - For python: https://marketplace.visualstudio.com/items?itemName=ms-python.python
+- For docker: https://marketplace.visualstudio.com/items?itemName=PeterJausovec.vscode-docker
 
-    **Note**: The above plugins might ask you to download some more plugins. These are not necessary.
+- For java: https://marketplace.visualstudio.com/items?itemName=redhat.java
+
+- For python: https://marketplace.visualstudio.com/items?itemName=ms-python.python
+
+**Note**: The above plugins might ask you to download some more plugins. These are not necessary.
 
 
 ## Offline steps
