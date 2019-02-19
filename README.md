@@ -126,7 +126,7 @@ This will simulate different versions of classifiers/regressors, and produce the
 
 `python3 machine_learner/util/classificationComparison_multigoal.py machine_learner/collected_data/target/ outputDir/`
 with 
-    - `outputDir` a self made directory where the results of the evaluation can be stored.
+- `outputDir` a self made directory where the results of the evaluation can be stored.
 
 At the end of the analysis, a web page will pop up containing all the metrics for the different versions of classifiers/regressors.
 
@@ -145,8 +145,8 @@ In the respective file, functions are provided to draw a few different graphs (e
 
 `python3 machine_learner/util/uncertaintyInspection_multigoal.py outputDir/ dataFile.json`
 with 
-    - `outputDir` a self made directory where the resulting graphs will be stored.
-    - `dataFile.json` the actual data of the different configurations over multiple cycles.
+- `outputDir` a self made directory where the resulting graphs will be stored.
+- `dataFile.json` the actual data of the different configurations over multiple cycles.
 
 
 ### Graphs per cycle
@@ -155,8 +155,8 @@ To generate graphs per cycle, run the `selected_adaptation_options_multigoal` fu
 
 `python3 machine_learner/util/graph.py dataFile.json outputDir/`
 with 
-    - `outputDir` a self made directory where the resulting graphs will be stored.
-    - `dataFile.json` the actual data of the different configurations over multiple cycles.
+- `outputDir` a self made directory where the resulting graphs will be stored.
+- `dataFile.json` the actual data of the different configurations over multiple cycles.
 
 
 ### Boxplots comparison with/without learning
@@ -165,9 +165,10 @@ Lastly, the `boxplotResults` function in the file `machine_learner/machine_learn
 
 `python3 machine_learner/util/graph.py dataFileClassification.json dataFileRegression.json outputDir/`
 with 
-    - `outputDir` a self made directory where the resulting graph and .csv file will be stored.
-    - `dataFileClassification.json`/`dataFileRegression.json` the data files for classification and regression respectively.
-
+- `outputDir` a self made directory where the resulting graph and .csv file will be stored.
+- `dataFileClassification.json`/`dataFileRegression.json` the data files for classification and regression respectively.
+&nbsp;
+&nbsp;
 
 ## API of online supervised learning
 -------------------
@@ -205,9 +206,9 @@ with
             { 
                 "message": "invalid request"
             }
-
-The task type, as well as the cycle number, can be adjusted to another task type or cycle respectively.
 ---
+The task type, as well as the cycle number, can be adjusted to another task type or cycle respectively.
+
 
 **Testing a model**
 ----
@@ -243,7 +244,6 @@ The task type, as well as the cycle number, can be adjusted to another task type
             { 
                 "message": "invalid request"
             }
-
-Similar to training, the task type and cycle are adjustable.
 ---
+Similar to training, the task type and cycle are adjustable.
 
