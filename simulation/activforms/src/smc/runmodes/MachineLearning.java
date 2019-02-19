@@ -5,8 +5,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -19,28 +20,53 @@ import util.ConfigLoader;
 public class MachineLearning extends SMCConnector {
    
 	private int lastLearningIndex = 0;
+	private boolean overTime = false;
+	Timer timer;
+
+	private void initializeTimer(int seconds) {
+		overTime = false;
+		timer = new Timer();
+		timer.schedule(new TimerTask() {
+			@Override
+			public void run() {
+				overTime = true;
+			}
+		}, seconds * 1000);
+	}
+
+	private void destructTimer() {
+		timer.cancel();
+	}
+
 
 	@Override
 	public void startVerification() {
+		initializeTimer(ConfigLoader.getInstance().getTimeCap());
+		
 		if (cycles <= TRAINING_CYCLE) {
 			training();
 		} else {
 			testing();
 		}
+
+		destructTimer();
 	}
+
 
 	private void training() {
 		// Formally verify all the adaptation options, and send them to the learners for training
-		Long startTime = System.currentTimeMillis();
-		int timeCap = ConfigLoader.getInstance().getTimeCap();
+		int amtOptions = adaptationOptions.size();
 		List<Integer> verifiedOptions = new ArrayList<>();
+		List<Integer> unverifiedOptions = new ArrayList<>();
+		for (int i = 0; i < amtOptions; i++) {
+			unverifiedOptions.add(i);
+		}
 
 		AdaptationOption adaptationOption;
-		int amtOptions = adaptationOptions.size();
 		for (int i = 0; i < amtOptions; i++) {
 			int actualIndex = (i + lastLearningIndex) % amtOptions;
 
-			if ((System.currentTimeMillis() - startTime) / 1000 > timeCap) {
+			if (overTime) {
 				lastLearningIndex = actualIndex;
 				break;
 			}
@@ -50,6 +76,11 @@ public class MachineLearning extends SMCConnector {
 				adaptationOption.verificationResults);
 
 			verifiedOptions.add(actualIndex);
+			unverifiedOptions.remove(unverifiedOptions.indexOf(actualIndex));
+		}
+
+		for (Integer i : unverifiedOptions) {
+			adaptationOptions.get(i).verificationResults.packetLoss = 100;
 		}
 
 		send(verifiedOptions.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), taskType, Mode.TRAINING);
@@ -67,8 +98,6 @@ public class MachineLearning extends SMCConnector {
 	}
 
 	private void testing1Goal() {
-		Long startTime = System.currentTimeMillis();
-
 		// Send the adaptation options to the learner with mode testing, returns the predictions of the learner
 		JSONObject response = send(adaptationOptions, taskType, Mode.TESTING);
 
@@ -103,17 +132,18 @@ public class MachineLearning extends SMCConnector {
 				}
 			}
 		} else {
-			IntStream.range(0, adaptationOptions.size()).forEach(i -> overallIndices.add(i));
+			for (int i = 0; i < adaptationOptions.size(); i++) {
+				overallIndices.add(i);
+			}
 		}
 
 		Collections.shuffle(overallIndices);
 
 		int lastIndex = 0;
-		int timeCap = ConfigLoader.getInstance().getTimeCap();
 		AdaptationOption option;
 
 		for (Integer index : overallIndices) {
-			if ((System.currentTimeMillis() - startTime) / 1000 > timeCap) {
+			if (overTime) {
 				break;
 			}
 			option = adaptationOptions.get(index);
@@ -136,8 +166,6 @@ public class MachineLearning extends SMCConnector {
 	}
 
 	private void testing2Goals() {
-		Long startTime = System.currentTimeMillis();
-
 		// Send the adaptation options to the learner with mode testing, returns the predictions of the learner
 		JSONObject response = send(adaptationOptions, taskType, Mode.TESTING);
 		
@@ -171,15 +199,16 @@ public class MachineLearning extends SMCConnector {
 
 				for (int i = 0; i < pred_la.length(); i++) {
 					int predictedClass = 
-							(pl.evaluate(Double.parseDouble(pred_pl.get(i).toString())) ? 1 : 0) +
-							(la.evaluate(Double.parseDouble(pred_la.get(i).toString())) ? 2 : 0);
+						(pl.evaluate(Double.parseDouble(pred_pl.get(i).toString())) ? 1 : 0) +
+						(la.evaluate(Double.parseDouble(pred_la.get(i).toString())) ? 2 : 0);
 					amtPredClass[predictedClass]++;
 					predictions.add(predictedClass);
 				}
 				break;
 
 			default:
-				throw new RuntimeException("Trying to do testing for 2 goals with incompatible task type.");
+				throw new RuntimeException(
+					String.format("Trying to do testing for 2 goals with incompatible task type '%s'.", taskType.val));
 		}
 		
 		// The indices for the options of the best class predicted
@@ -234,7 +263,6 @@ public class MachineLearning extends SMCConnector {
 		overallIndices.addAll(indicesSub);
 
 		
-		int timeCap = ConfigLoader.getInstance().getTimeCap();
 		AdaptationOption adaptationOption;
 		int lastIndex = 0;
 
@@ -249,7 +277,7 @@ public class MachineLearning extends SMCConnector {
 
 			lastIndex++;
 
-			if ((System.currentTimeMillis() - startTime) / 1000 > timeCap) {
+			if (overTime) {
 				break;
 			}
 		}
