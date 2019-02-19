@@ -63,11 +63,17 @@ public class Comparison extends SMCConnector {
 				adjInspection.getJSONArray("regressionPLBefore"));
 		}
 
-
+		
 		// Check all the adaptation options with activFORMS
+		int timeCap = ConfigLoader.getInstance().getTimeCap();
+		List<Long> verifTimes = new ArrayList<>();
+
 		for (AdaptationOption adaptationOption : adaptationOptions) {
+			long startTime = System.currentTimeMillis();
 			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
 				adaptationOption.verificationResults);
+			verifTimes.add(System.currentTimeMillis() - startTime);
+
 			adjInspection.getJSONArray("packetLoss").put(adaptationOption.verificationResults.packetLoss);
 			adjInspection.getJSONArray("energyConsumption").put(adaptationOption.verificationResults.energyConsumption);
 			adjInspection.getJSONArray("latency").put(adaptationOption.verificationResults.latency);
@@ -75,51 +81,101 @@ public class Comparison extends SMCConnector {
 		}
 
 
+
 		if (training) {
-			// If we are training, send the entire adaptation space to the learners and check what they have learned
-			send(adaptationOptions, TaskType.CLASSIFICATION, Mode.TRAINING);
-			send(adaptationOptions, TaskType.REGRESSION, Mode.TRAINING);
+			// If we are training, send the entire adaptation space (or limited space due to time constraints) to the learners,
+			// and check what they have learned afterwards
+			int amtOptions = adaptationOptions.size();
+			long totalTime = 0;
+			List<Integer> verifiedOptions = new ArrayList<>();
+			
+			for (int i = 0; i < amtOptions; i++) {
+				int actualIndex = (i + lastLearningIndex) % amtOptions;
+	
+				if (totalTime / 1000 > timeCap) {
+					lastLearningIndex = actualIndex;
+					break;
+				}
+	
+				totalTime += verifTimes.get(actualIndex);
+				verifiedOptions.add(actualIndex);
+			}
+			
+			// Retrieve the actual adaptation options which have been verified by using the indices
+			List<AdaptationOption> options = verifiedOptions.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList());
+
+			send(options, TaskType.CLASSIFICATION, Mode.TRAINING);
+			send(options, TaskType.REGRESSION, Mode.TRAINING);
 
 			predictionLearners1Goal(adaptationOptions, adjInspection.getJSONArray("classificationAfter"),
 				adjInspection.getJSONArray("regressionPLAfter"));
+
 		} else {
+
 			// If we are testing, send the adjustments to the learning models and check their predictions again
-			List<AdaptationOption> classificationTrainOptions = new ArrayList<>();
-			List<AdaptationOption> regressionTrainOptions = new ArrayList<>();
 
 			// Parse the classification and regression results from the JSON responses.
 			final List<Integer> classificationResults = adjInspection.getJSONArray("classificationBefore")
-				.toList().stream()
-				.map(o -> Integer.parseInt(o.toString()))
+				.toList().stream().map(o -> Integer.parseInt(o.toString()))
 				.collect(Collectors.toList());
 			final List<Float> regressionResults = adjInspection.getJSONArray("regressionPLBefore")
-				.toList().stream()
-				.map(o -> Float.parseFloat(o.toString()))
+				.toList().stream().map(o -> Float.parseFloat(o.toString()))
 				.collect(Collectors.toList());
 
 			Goal pl = goals.getPacketLossGoal();
 
+			List<Integer> overallIndicesClass = new ArrayList<>();
+			List<Integer> overallIndicesRegr = new ArrayList<>();
+
 			// Determine which adaptation options have to be sent back for the specific learners
 			for (int i = 0; i < adaptationOptions.size(); i++) {
 				if (classificationResults.get(i).equals(1)) {
-					classificationTrainOptions.add(adaptationOptions.get(i));
+					overallIndicesClass.add(i);
 				}
 				if (pl.evaluate(regressionResults.get(i))) {
-					regressionTrainOptions.add(adaptationOptions.get(i));
+					overallIndicesRegr.add(i);
 				}
 			}
 
-			// In case the adaptation space of a prediction is 0, send all adaptations back for online learning
-			if (classificationResults.stream().noneMatch(o -> o == 1)) {
-				classificationTrainOptions = adaptationOptions;
+			// In case the adaptation space of a prediction is 0, consider all adaptation options for online learning
+			if (overallIndicesClass.isEmpty()) {
+				for (int i = 0; i < adaptationOptions.size(); i++) {
+					overallIndicesClass.add(i);
+				}
 			}
-			if (regressionResults.stream().noneMatch(o -> pl.evaluate(o))) {
-				regressionTrainOptions = adaptationOptions;
+			if (overallIndicesRegr.isEmpty()) {
+				for (int i = 0; i < adaptationOptions.size(); i++) {
+					overallIndicesRegr.add(i);
+				}
 			}
 
+			Collections.shuffle(overallIndicesClass);
+			Collections.shuffle(overallIndicesRegr);
+
+			int combinedTime = 0;
+			for (int i = 0; i < overallIndicesClass.size(); i++) {
+				int actualIndex = overallIndicesClass.get(i);
+				if (combinedTime / 1000 > timeCap) {
+					overallIndicesClass = overallIndicesClass.subList(0, i);
+					break;
+				}
+				combinedTime += verifTimes.get(actualIndex);
+			}
+			
+			combinedTime = 0;
+			for (int i = 0; i < overallIndicesRegr.size(); i++) {
+				int actualIndex = overallIndicesRegr.get(i);
+				if (combinedTime / 1000 > timeCap) {
+					overallIndicesRegr = overallIndicesRegr.subList(0, i);
+					break;
+				}
+				combinedTime += verifTimes.get(actualIndex);
+			}
+
+
 			// Send the adaptation options specific to the learners back for online learning
-			send(classificationTrainOptions, TaskType.CLASSIFICATION, Mode.TRAINING);
-			send(regressionTrainOptions, TaskType.REGRESSION, Mode.TRAINING);
+			send(overallIndicesClass.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), TaskType.CLASSIFICATION, Mode.TRAINING);
+			send(overallIndicesRegr.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), TaskType.REGRESSION, Mode.TRAINING);
 
 			// Test the predictions of the learners again after online learning to track their adjustments
 			predictionLearners1Goal(adaptationOptions, adjInspection.getJSONArray("classificationAfter"),
