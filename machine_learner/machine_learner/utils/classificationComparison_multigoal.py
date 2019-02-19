@@ -103,8 +103,7 @@ def printTable(data, outputPath):
 
 
 
-def printConfusionMatrix(confMatrix, outputPath, filename, technique, loss, scaler):
-    # Temporarily used until print of all matrices is fixed
+def printConfusionMatrix(confMatrix, outputPath, filename):
     sumNested = lambda x: sum(map(sumNested, x)) if isinstance(x, list) else x
     amtSamples = sumNested(confMatrix)
     rows = {'values' : [[],[],[],[],[]], 'height':40}
@@ -116,7 +115,7 @@ def printConfusionMatrix(confMatrix, outputPath, filename, technique, loss, scal
     trace = go.Table(header={'values': [f'Samples = {amtSamples}', 'Predicted class 0', 'Predicted class 1', 'Predicted class 2', 'Predicted class 3']}, cells=rows)
 
     layout = dict(width=700, height=600, font=dict(family='"Open Sans", verdana, arial, sans-serif', size=18, color='#444'), \
-        title=f'Confusion matrix {technique}<br>Scaler={scaler}' + (f', Loss={loss}' if loss != None else ''))
+        title=f'Confusion matrix')
     fig = dict(data=[trace], layout=layout)
     pio.write_image(fig, os.path.join(outputPath, filename + '.png'))
     
@@ -133,16 +132,16 @@ def writeConfMatricesToFiles(matrices, filename, outputPath):
         for j in range(4):
             keys.append(f'Actual{i} - Predicted{j}')
 
-    csvOutputWriter.writerow(['technique', 'loss function', 'scaler'] + keys)
+    csvOutputWriter.writerow(['technique', 'loss function', 'penalty function', 'scaler'] + keys)
 
     for technique, matrix in sorted(matrices.items()):
-        technique, loss, scaler = technique.split('_')
+        technique, loss, penalty, scaler = technique.split('_')
         # Make sure the order of the initial line is kept when storing the data in the csv
         confValues = []
         for i in range(4):
             for j in range(4):
                 confValues.append(matrix[i][j])
-        csvOutputWriter.writerow([technique, '-' if loss=='None' else loss, scaler] + confValues)
+        csvOutputWriter.writerow([technique, '-' if loss=='None' else loss, '-' if penalty=='None' else penalty, scaler] + confValues)
 
     csvOutputFile.close()
 
@@ -201,8 +200,8 @@ def compareResultsClassifiers(inputPath, outputPath):
 
         # Confusion matrix for all configurations
         overallConfMatrix = getConfusionMatrix(configurations)
-        confMatrices['all'][f'{classifier}_{loss}_{scaler}'] = (overallConfMatrix)
-        printConfusionMatrix(overallConfMatrix, outputPath, f'ConfusionMatrixAll_{classifier}_{loss}_{scaler}', classifier, loss, scaler)
+        confMatrices['all'][f'{classifier}_{loss}_{penalty}_{scaler}'] = (overallConfMatrix)
+        printConfusionMatrix(overallConfMatrix, outputPath, f'ConfusionMatrixAll_{classifier}_{loss}_{penalty}_{scaler}')
         
 
         matthewsCorrCoef = calculateMatthewsCorrCoef(configurations)
