@@ -37,7 +37,7 @@ public class ActivForms extends SMCConnector {
 			smcChecker.checkCAO(adaptationOption.toModelString(), environment.toModelString(),
 				adaptationOption.verificationResults);
 			adaptationOption.isVerified = true;
-			
+
 			verifTimes[index] = System.currentTimeMillis() - startTime;
 			index++;
 		}
@@ -84,30 +84,25 @@ public class ActivForms extends SMCConnector {
 			for (AdaptationOption option : adaptationOptions) {
 				JSONArray newFeatures = new JSONArray();
 
-				// 17 links (SNR)
+				// Collection of all the features: SNR - Power setting - Distribution - Traffic probability
 				for (SNR snr : env.linksSNR) {
 					newFeatures.put((int) snr.SNR);
 				}
 				
-				// 17 links (Power)
 				option.system.motes.values().stream()
 					.map(mote -> mote.getLinks())
 					.flatMap(links -> links.stream())
 					.forEach(link -> newFeatures.put((int) link.getPower()));
 				
-				// 17 links (Distribution)
 				for (Mote mote : option.system.motes.values()) {
 					for (Link link : mote.getLinks()) {
 						newFeatures.put((int) link.getDistribution());
 					}
 				}
 				
-				// 14 motes (Traffic load)
 				for (TrafficProbability traffic : env.motesLoad) {
 					newFeatures.put((int) traffic.load);
 				}
-				
-				// => Total of 65 features
 				
 				// Features
 				root.getJSONArray("features").put(newFeatures);

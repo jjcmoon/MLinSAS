@@ -78,7 +78,7 @@ public class SMCModelLoader {
 
 				// construct model from the properties you have read
 				SMCModel smcModel = new SMCModel(key, path, type, Integer.parseInt(simulations),
-						Double.parseDouble(alpha), Double.parseDouble(epsilon), model);
+					Double.parseDouble(alpha), Double.parseDouble(epsilon), model);
 
 				// add the model
 				models.add(smcModel);

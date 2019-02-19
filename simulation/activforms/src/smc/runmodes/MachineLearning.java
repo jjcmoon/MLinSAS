@@ -91,7 +91,6 @@ public class MachineLearning extends SMCConnector {
 
 		// Retrieve the amount of options that were predicted to meet the goal by the learner
 		int adaptationSpace = Integer.parseInt(response.get("adaptation_space").toString());
-		System.out.print(";" + adaptationSpace);
 
 		ArrayList<Float> predictions = new ArrayList<>();
 		JSONArray arr = response.getJSONArray("predictions");
@@ -135,8 +134,13 @@ public class MachineLearning extends SMCConnector {
 			option.isVerified = true;
 		}
 
+		List<AdaptationOption> learningOptions = 
+			adaptationOptions.stream().filter(o -> o.isVerified).collect(Collectors.toList());
+
+		System.out.print(";" + learningOptions.size());
+
 		// Perform online learning on the samples that were predicted to meet the user goal
-		send(adaptationOptions.stream().filter(o -> o.isVerified).collect(Collectors.toList()), taskType, Mode.TRAINING);
+		send(learningOptions, taskType, Mode.TRAINING);
 	}
 
 
@@ -144,10 +148,6 @@ public class MachineLearning extends SMCConnector {
 		// Send the adaptation options to the learner with mode testing, returns the predictions of the learner
 		JSONObject response = send(adaptationOptions, taskType, Mode.TESTING);
 		
-		// Retrieve the amount of options that were predicted to meet the goal by the learner
-		int adaptationSpace = Integer.parseInt(response.get("adaptation_space").toString());
-		System.out.print(";" + adaptationSpace);
-
 		// The different prediction classes in case of 2 goals (latency & packet loss)
 		int[] amtPredClass = {0, 0, 0, 0};
 		ArrayList<Integer> predictions = new ArrayList<>();
@@ -244,8 +244,12 @@ public class MachineLearning extends SMCConnector {
 			adaptationOption.isVerified = true;
 		}
 
+		List<AdaptationOption> learningOptions = 
+			adaptationOptions.stream().filter(o -> o.isVerified).collect(Collectors.toList());
+
+		System.out.print(";" + learningOptions.size());
 		// Perform online learning on the samples that were predicted to meet the user goal
-		send(adaptationOptions.stream().filter(o -> o.isVerified).collect(Collectors.toList()), taskType, Mode.TRAINING);
+		send(learningOptions, taskType, Mode.TRAINING);
 	}
 
 }

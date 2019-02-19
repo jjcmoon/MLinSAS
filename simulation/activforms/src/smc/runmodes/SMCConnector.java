@@ -27,9 +27,6 @@ import util.ConfigLoader;
 
 
 
-// TODO: make it able to abort the whole proces when you receive an error from the ML
-// It will make debugging much easier.
-
 abstract public class SMCConnector {
 
 	List<AdaptationOption> adaptationOptions;
@@ -252,6 +249,8 @@ abstract public class SMCConnector {
 			
 			// Print the time it took for the webserver to send an answer back
 			System.out.print(";" + (System.currentTimeMillis() - start));
+			
+			// TODO: make it able to abort the whole proces when you receive an error from the ML
 
 			return response;
 		} catch (Exception e) {

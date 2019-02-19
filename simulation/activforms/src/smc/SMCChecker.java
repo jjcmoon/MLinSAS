@@ -1,5 +1,5 @@
 /*
- * This is the ActivFORMS model checker.
+ * This class connects the feedback loop with the model checker (Uppaal SMC).
  */
 
 package smc;
@@ -20,12 +20,12 @@ public class SMCChecker {
 
 
 	public static String command = Paths
-			.get(System.getProperty("user.dir"), "uppaal-verifyta", "verifyta -a %f -E %f -u %s").toString();
+		.get(System.getProperty("user.dir"), "uppaal-verifyta", "verifyta -a %f -E %f -u %s").toString();
 
 
 	SMCModelLoader modelLoader;
 
-	// The models send to the binary
+	// The models used by Uppaal
 	List<SMCModel> models;
 
 	public SMCChecker() {
@@ -122,7 +122,7 @@ public class SMCChecker {
 	/**
 	 * Change the configuration in the quality model (string previously read from file).
 	 * @param file the content of the quality model file.
-	 * @param cao the system (motes and their links, loads, ...).
+	 * @param cao the Current Adaptation Option (motes and their links, loads, ...).
 	 * @param env the environment (moteloads, SNR's of links).
 	 * @return the quality model with changed configuration.
 	 */
@@ -160,6 +160,12 @@ public class SMCChecker {
 	}
 
 
+	/**
+	 * Check the qualities (using the quality models) of the Current Adaptation Option by using the model checker.
+	 * @param adaptationOption the adaptation option which will be verified.
+	 * @param environment the environment of the system in this cycle.
+	 * @param verificationResults the results which are retrieved after model checking.
+	 */
 	public void checkCAO(String adaptationOption, String environment, Qualities verificationResults) {
 
 		// loads and updates the models and their values specified in the SMCConfig.properties

@@ -93,6 +93,5 @@ def doFeatureSelection(network):
 
 
 if __name__ == '__main__':
-    # TODO verify
     doFeatureSelection('DeltaIoTv2')
 

@@ -160,7 +160,7 @@ def simulateModelWithTimes(model, scaler, loss, penalty, amtTrainingCycles = 30,
     else:
         model = ModelEncapsRegr([model]*2, [loss]*2, [penalty]*2)
     model_name, loss_name, pen_name = model.getName()
-    # FIXME training cycles and exploration percentage temporarily stored here
+    # FIXME training cycles and exploration percentage temporarily stored in the model name
     model_name += f'-{amtTrainingCycles}-{explorationPercentage}'
 
     name = f'{model_name}_{loss_name}_{pen_name}_{scaler.__name__ if scaler != None else "None"}'

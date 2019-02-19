@@ -5,9 +5,9 @@ import java.util.List;
 
 import com.google.gson.Gson;
 
+// The environment class holds the uncertainties that impact the qualities of the system
 public class Environment {
 
-	// The environment class holds the uncertainties that impact the qualities of the system
 	public List<SNR> linksSNR = new LinkedList<>();
 	public List<TrafficProbability> motesLoad = new LinkedList<>();
 

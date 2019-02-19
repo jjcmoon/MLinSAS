@@ -127,36 +127,6 @@ def printConfusionMatrix(confMatrix, outputPath, filename, technique, loss, scal
     pio.write_image(fig, os.path.join(outputPath, filename + '.png'))
 
 
-def printConfusionMatrices(confMatrices, outputPath, filename):
-    # TODO find out why this will not print more than one table
-    s_row = ceil(len(confMatrices)/2)
-    # fig = tools.make_subplots(rows=2, cols=s_row, subplot_titles=list(confMatrices.keys()))
-    data = []
-
-    for _, confMatrix in sorted(confMatrices.items()):
-        index = confMatrices.index(confMatrix)
-        amtSamples = sum(confMatrix.values())
-
-        row, col = 1 if index < s_row else 2, (index % s_row) + 1
-        trace = go.Table(header={'values': [f'Samples = {amtSamples}', 'Predicted good', 'Predicted bad']}, \
-            cells={'values': [['Actually good', 'Actually bad'], \
-                [confMatrix['TruePositives'], confMatrix['FalsePositives']], \
-                [confMatrix['FalseNegatives'], confMatrix['TrueNegatives']]], \
-                'height': 40})
-        data.append(trace)
-        # fig.append_trace(trace, row, col)
-
-    layout = dict(width=1500, height=1000, font=dict(family='"Open Sans", verdana, arial, sans-serif', size=18, color='#444'), \
-        title='Confusion matrices')
-    # fig = dict(data=data, layout=layout)
-    fig = go.Figure(data=data, layout=layout)
-    # fig['layout'].update(width=1500, height=1000, font=dict(family='"Open Sans", verdana, arial, sans-serif', size=18, color='#444'), \
-        # title='Confusion matrices')
-    # print(data)
-    # plot(fig, filename=os.path.join(outputPath, 'tmp.html'))
-    pio.write_image(fig, os.path.join(outputPath, filename + '.png'))
-
-
 def writeConfMatricesToFiles(matrices, filename, outputPath):
     if len(matrices.items()) == 0:
         return
@@ -232,7 +202,6 @@ def compareResultsClassifiers(inputPath, outputPath):
 
 
             # The confusion matrix for the versatile configurations
-            # TODO merge all confusion matrices into single plot
             versConfMatrix = getCumulativeConfMatrices(versatileConfigurations)
             confMatrices['versatile'][f'{classifier}_{loss}_{scaler}'] = (versConfMatrix)
             printConfusionMatrix(versConfMatrix, outputPath, f'ConfusionMatrixVers_{classifier}_{loss}_{scaler}', classifier + ' (versatile)', loss, scaler)
@@ -252,8 +221,6 @@ def compareResultsClassifiers(inputPath, outputPath):
             csvOutputWriter.writerow(row)
     
     csvOutputFile.close()
-    # printConfusionMatrices(confMatrices['all'], outputPath, 'ConfMatricesAll')
-    # printConfusionMatrices(confMatrices['versatile'], outputPath, 'ConfMatricesVersatile')
 
     printTable(outputData, outputPath)
     writeConfMatricesToFiles(confMatrices['all'], CSV_CONFALL_NAME, outputPath)

@@ -108,7 +108,6 @@ def plotLearningEffect2Cycles(item, minEC, maxEC, graphName):
     initialiseFigure('Effect of online learning adjustments over 2 cycles', fontsize=20)
     
     # chosen arbitrarily
-    # TODO use heuristic to find interesting points
     step = int((len(item)-1) / 6)
     for i in range(step, len(item), step):
         ax = plt.subplot(2, 3, int(i/step))

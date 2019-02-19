@@ -20,14 +20,14 @@ import util.ConfigLoader;
 
 public class FeedbackLoop {
 
-	//The probe and effector of the network being worked on.
+	// The probe and effector of the network being worked on.
 	Probe probe;
 	Effector effector;
 
 	
 	// Knowledge
-	public static final int DISTRIBUTION_GAP = ConfigLoader.getInstance().getDistributionGap();
-	public static final boolean human = ConfigLoader.getInstance().timeInReadableFormat();
+	private final int DISTRIBUTION_GAP = ConfigLoader.getInstance().getDistributionGap();
+	private final boolean timeInReadableFormat = ConfigLoader.getInstance().timeInReadableFormat();
 	
 	Configuration currentConfiguration;
 	Configuration previousConfiguration;
@@ -40,15 +40,9 @@ public class FeedbackLoop {
 
 	// The current adaptation options are the options specific to the current cycle
 	List<AdaptationOption> currentAdaptationOptions = new LinkedList<>();
-	// The overall adaptation options keeps track of all the encountered options so far
-	// Set<AdaptationOption> overallAdaptationOptions = new LinkedHashSet<>();
-
 	List<AdaptationOption> verifiedOptions = new LinkedList<>();
 
-	// SMCConnector smcConnector = new SMCConnector();
 	SMCConnector smcConnector;
-
-
 	Goals goals = Goals.getInstance();
 
 	// Thresholds for when you want to adapt/change the network
@@ -56,9 +50,6 @@ public class FeedbackLoop {
 	static final int SNR_UPPER_THRESHOLD = 5;
 	static final int ENERGY_CONSUMPTION_THRESHOLD = 5;
 	static final int PACKET_LOSS_THRESHOLD = 5;
-
-	// Gets triggered when the difference between the last two cycles is greater than this,
-	// but also when it is smaller than minus this
 	static final int MOTES_TRAFFIC_THRESHOLD = 10;
 
 
@@ -88,7 +79,7 @@ public class FeedbackLoop {
 		// Run the mape-k loop and simulator for the specified amount of cycles
 		for (int i = 1; i <= ConfigLoader.getInstance().getAmountOfCycles(); i++) {
 		
-			if (!human) {
+			if (!timeInReadableFormat) {
 				System.out.print(i + ";" + System.currentTimeMillis());
 			} else {
 				now = LocalDateTime.now();
@@ -153,13 +144,12 @@ public class FeedbackLoop {
 		// returns the first (and only) element of the list.
 		QoS qos = probe.getNetworkQoS(1).get(0);
 
-		// Adds the QoS of the previous configuration to the current configuration,
-		// probably to pass on to the learner so he can use this to online learn
+		// Adds the QoS of the previous configuration to the current configuration
 		currentConfiguration.qualities.packetLoss = qos.getPacketLoss();
 		currentConfiguration.qualities.energyConsumption = qos.getEnergyConsumption();
 		currentConfiguration.qualities.latency = qos.getLatency();
 
-		// Call the next step off the mapek
+		// Call the next step off the mapek loop
 		analysis();
 	}
 
@@ -172,29 +162,25 @@ public class FeedbackLoop {
 		if (!adaptationRequired)
 			return;
 
-		// creates a new object for the adaption option
 		AdaptationOption newPowerSettingsConfig = new AdaptationOption();
-		
-		// copy the system = architecture of the network = managed system.java
 		newPowerSettingsConfig.system = currentConfiguration.system.getCopy();
 
-		// I think this adapts the power until the SNR reaches zero
+		// Find the optimal power setting for this cycle
 		analyzePowerSettings(newPowerSettingsConfig);
-
-		// when there are 2 outgoing links and they are both 100, set one to 0
-		// Seems weird, why do this. Its dirty programming, but what is the origin of the problem.
+		// Make sure packets are not duplicated in case a mote has more than 1 parent (not of interest at the moment)
 		removePacketDuplication(newPowerSettingsConfig);
-
-		// This adds the possible link distributions to the motes who have 2 outgoing links
+		// This adds the possible link distributions to the motes who have 2 outgoing links 
+		// ~= (construction of the adaptation space)
 		composeAdaptationOptions(newPowerSettingsConfig);
 
 		// Pass the adaptionOptions and the environment (noise and load) to the connector
 		smcConnector.setAdaptationOptions(currentAdaptationOptions, currentConfiguration.environment);
 
-		// let the model checker and/or machine learner start to predict which adaption options will
-		// fullfill the goals definied in the connector
+		// let the model checker and/or machine learner start to predict which adaption options 
+		// should be considered by the planner
 		smcConnector.verify();
 
+		// Only consider those options which have been formally verified by the model checker
 		verifiedOptions.clear();
 		for (AdaptationOption option : currentAdaptationOptions) {
 			if (option.isVerified) {
@@ -208,6 +194,7 @@ public class FeedbackLoop {
 
 	/**
 	 * Sets the distributions for the links of motes with 2 parents to 0-100 respectively.
+	 * @param newConfiguration the adaptation option which should be adjusted
 	 */
 	void initializeMoteDistributions(AdaptationOption newConfiguration) {
 		for (Mote mote : newConfiguration.system.motes.values()) {
@@ -247,10 +234,7 @@ public class FeedbackLoop {
 
 		}
 
-		// Save the adaptation options in the overall set of adaptation options
-		// overallAdaptationOptions.addAll(currentAdaptationOptions);
-
-		// Update the indices of the adaptation options
+		// Update the indices and verification status of the adaptation options
 		for (int i = 0; i < currentAdaptationOptions.size(); i++) {
 			currentAdaptationOptions.get(i).overallIndex = i;
 			currentAdaptationOptions.get(i).isVerified = false;
@@ -283,7 +267,11 @@ public class FeedbackLoop {
 		}
 	}
 
-	// Gets called to make a new adaption in analyse()
+
+	/**
+	 * Finds the optimal power settings over all the links (by minimizing packet loss).
+	 * @param newConfiguration the configuration which will hold the optimal power settings.
+	 */
 	private void analyzePowerSettings(AdaptationOption newConfiguration) {
 		int powerSetting;
 		double newSNR;
@@ -327,7 +315,12 @@ public class FeedbackLoop {
 		}
 	}
 
-	// when there are 2 outgoing links and they are both 100, set one to 0
+	/**
+	 * If there are 2 outgoing links which are both set to 100, 
+	 * packets will be duplicated and sent over both links.
+	 * This method sets the distribution of the first link to 0 in that case.
+	 * @param newConfiguration the adaptation option which should be adjusted.
+	 */
 	private void removePacketDuplication(AdaptationOption newConfiguration) {
 		for (Mote mote : newConfiguration.system.motes.values()) {
 			if (mote.getLinks().size() == 2) {
@@ -397,12 +390,9 @@ public class FeedbackLoop {
 	// The planning step of the mape loop
 	// Selects "the best" addaption options of the predicted/ verified ones 
 	// and plans the option to be executed
-	// it assumes some options have been send, so could be dangerous but I think not
 	void planning() {
 
-		// init an adaption option
 		AdaptationOption bestAdaptationOption = null;
-		// AdaptationOption backUp = null;
 
 		// TODO: What course of action if not all the goals are met?
 		for (int i = 0; i < verifiedOptions.size(); i++) {
@@ -466,7 +456,7 @@ public class FeedbackLoop {
 		} else {
 			if (ConfigLoader.getInstance().timeInReadableFormat()) {
 				LocalDateTime now = LocalDateTime.now();
-				System.out.println(String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond()));
+				System.out.println("; " + String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond()));
 			} else {
 				System.out.println(";" + System.currentTimeMillis());
 			}
@@ -474,9 +464,7 @@ public class FeedbackLoop {
 	}
 
 
-	// gets called if there was a thresshold passed to look at new adaption,
-	// and the  new adaption chosen differs from the previous one, 
-	// so changes/steps have to be done
+	// Execute the steps which were composed by the planner if applicable
 	void execution() {
 
 		Set<Mote> motesEffected = new HashSet<>();
@@ -515,7 +503,7 @@ public class FeedbackLoop {
 
 		steps.clear();
 
-		if (!human) {
+		if (!timeInReadableFormat) {
 			System.out.print(";" + System.currentTimeMillis() + "\n");
 		} else {
 			LocalDateTime now = LocalDateTime.now();
@@ -525,7 +513,7 @@ public class FeedbackLoop {
 	}
 
 
-	// return the link from mote to dest
+	// Returns the link from mote to dest
 	Link findLink(Mote mote, int dest) {
 		for (Link link : mote.getLinks()) {
 			if (link.getDestination() == dest)

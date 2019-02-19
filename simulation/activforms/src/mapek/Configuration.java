@@ -1,11 +1,8 @@
 package mapek;
 
+// This class holds all the motes and general information (noise, topology, ...) of the network.
 public class Configuration {
 
-	// This is a class which hold all motes of the network.
-	// However, the whole network can be derived from it because of the info the motes hold.
-	// This is the architecture of the network allong with the current 
-	// adaption options (instellingen).
 	ManagedSystem system;
 
 	// The environment contains the SNR on a given link and the load.

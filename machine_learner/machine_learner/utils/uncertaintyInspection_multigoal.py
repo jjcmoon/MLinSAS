@@ -107,8 +107,6 @@ def plotEffectUncertainties(configuration, graphName):
 
     # Plot 10 data points per graph
     for i in range(1):
-        # TODO remove
-        i = 15
 
         plt.figure(figsize=(10,10))
         ax = plt.subplot(1, 1, 1)
@@ -160,9 +158,6 @@ def plotEffectUncertaintiesPLLA(configuration, graphName):
 
     # Plot 10 data points per graph
     for i in range(1):
-        # TODO remove
-        i = 15
-
         plt.figure(figsize=(10,10))
         ax = plt.subplot(1, 1, 1)
 
@@ -201,7 +196,6 @@ def plotEffectUncertaintiesPLLA(configuration, graphName):
         plt.axis([7, 12, 0, 8])
 
         outputDir = createOrGetDir('EffectUncertaintiesPLLA')
-        # plt.savefig(os.path.join(outputDir, f'EffectUncertainties_{graphName}[{(i*10)+1}-{((i+1)*10+1)}].pdf'), bbox_inches='tight')
         plt.savefig(os.path.join(outputDir, f'EffectUncertainties_{graphName}_Cycles[{(i*10)+1}-{((i+1)*10)}].pdf'), bbox_inches='tight')
         plt.close()
 

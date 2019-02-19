@@ -105,6 +105,9 @@ public class Comparison extends SMCConnector {
 			// Retrieve the actual adaptation options which have been verified by using the indices
 			List<AdaptationOption> options = verifiedOptions.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList());
 
+			System.out.print(";" + options.size());
+			System.out.print(";" + adaptationOptions.size());
+
 			send(options, TaskType.CLASSIFICATION, Mode.TRAINING);
 			send(options, TaskType.REGRESSION, Mode.TRAINING);
 
@@ -173,10 +176,18 @@ public class Comparison extends SMCConnector {
 				combinedTime += verifTimes.get(actualIndex);
 			}
 
+			List<AdaptationOption> learningOptionsClass = 
+				overallIndicesClass.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList());
+			List<AdaptationOption> learningOptionsRegr = 
+				overallIndicesRegr.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList());
+
+			System.out.print(";" + learningOptionsClass.size());
+			System.out.print(";" + learningOptionsRegr.size());
+			System.out.print(";" + adaptationOptions.size());
 
 			// Send the adaptation options specific to the learners back for online learning
-			send(overallIndicesClass.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), TaskType.CLASSIFICATION, Mode.TRAINING);
-			send(overallIndicesRegr.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), TaskType.REGRESSION, Mode.TRAINING);
+			send(learningOptionsClass, TaskType.CLASSIFICATION, Mode.TRAINING);
+			send(learningOptionsRegr, TaskType.REGRESSION, Mode.TRAINING);
 
 			// Test the predictions of the learners again after online learning to track their adjustments
 			predictionLearners1Goal(adaptationOptions, adjInspection.getJSONArray("classificationAfter"),
@@ -255,6 +266,8 @@ public class Comparison extends SMCConnector {
 				verifiedOptions.add(actualIndex);
 			}
 			List<AdaptationOption> options = verifiedOptions.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList());
+			System.out.print(";" + options.size());
+			System.out.print(";" + adaptationOptions.size());
 
 			// If we are training, send the entire adaptation space to the learners and check what they have learned
 			send(options, TaskType.PLLAMULTICLASS, Mode.TRAINING);
@@ -291,11 +304,19 @@ public class Comparison extends SMCConnector {
 			List<Integer> classificationIndices = getOnlineLearningIndices(classificationResults, verifTimes);
 			List<Integer> regressionIndices = getOnlineLearningIndices(regressionResults, verifTimes);
 
+
+			List<AdaptationOption> learningOptionsClass = 
+				classificationIndices.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList());
+			List<AdaptationOption> learningOptionsRegr = 
+				regressionIndices.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList());
+
+			System.out.print(";" + learningOptionsClass.size());
+			System.out.print(";" + learningOptionsRegr.size());
+			System.out.print(";" + adaptationOptions.size());
+
 			// Send the adaptation options specific to the learners back for online learning
-			send(classificationIndices.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), 
-				TaskType.PLLAMULTICLASS, Mode.TRAINING);
-			send(regressionIndices.stream().map(i -> adaptationOptions.get(i)).collect(Collectors.toList()), 
-				TaskType.PLLAMULTIREGR, Mode.TRAINING);
+			send(learningOptionsClass, TaskType.PLLAMULTICLASS, Mode.TRAINING);
+			send(learningOptionsRegr, TaskType.PLLAMULTIREGR, Mode.TRAINING);
 
 			// Test the predictions of the learners again after online learning to track their adjustments
 			predictionLearners2Goals(adaptationOptions, adjInspection.getJSONArray("classificationAfter"),

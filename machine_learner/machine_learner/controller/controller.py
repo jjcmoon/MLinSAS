@@ -10,35 +10,33 @@ from machine_learner.models import classification, regression, plLaClassificatio
 
 @csrf_exempt
 def training_testing(request):
-    """ Function called when a request is received on localhost:8000 and responds apropriatly
+    """ 
+    Function called when a request is received on the local server and responds appropriately.
 
-    This function answers the httpRequest holding a json and a query from 
-    activforms
+    This function handles the requests for the learners or saving data when using the comparison run mode.
     """
     try:
         # only post request
         if request.method == 'POST':
 
-            # You get the full url from the request
-            # scheme://netloc/path;parameters?query#fragment
+            # Get the full url from the request
             path = request.get_full_path()
             
-            # You parse the url/path and only take the query part
-            # You parse this query in string form
-            # You take the value of the variable task-type
+            # Parse the url to get specific parameters
             task_type = parse_qs(urlparse(path).query)['task-type'][0]
             mode = parse_qs(urlparse(path).query)['mode'][0]
             cycle = int(parse_qs(urlparse(path).query)['cycle'][0])
 
             # Clear the models/output at the first adaptation cycle (if requested)
-            if cycle == 1 and parse_qs(urlparse(path).query)['delete-models'][0] == 'true':
+            if cycle == 1:
                 if mode == 'comparison':
                     # Remove all the collected data files before saving the first time
                     # The collected data files in question are .txt and .json files
                     dir_path = os.path.join('machine_learner', 'collected_data')
                     deleteFilesWithExt(dir_path, ['.txt', '.json'])
-                elif (mode == 'training') and \
-                    ((task_type == 'classification') or (task_type == 'regression') or (task_type == 'pllaclassification')):
+                elif mode == 'training' and \
+                    parse_qs(urlparse(path).query)['delete-models'][0] == 'true' and \
+                    task_type != 'none':
                     # Remove all the trained models for the specified mode before they are trained for the first time
                     # This is done by searching all the model files and deleting them (in the respective subdirectory per task_type)
                     dir_path = os.path.join('machine_learner', 'trained_models', task_type)
@@ -66,13 +64,6 @@ def training_testing(request):
                 elif mode == 'testing':
                     response = plLaClassification.testing(dataset['features'])
 
-            elif task_type == 'pllaregression':
-                if mode == 'training':
-                    response = plLaRegression.training(
-                        dataset['features'], dataset['target_pl'], dataset['target_la'], cycle)
-                elif mode == 'testing':
-                    response = plLaRegression.testing(dataset['features'])
-
             elif task_type == 'regression':
                 if mode == 'training':
                     response = regression.training(
@@ -80,10 +71,17 @@ def training_testing(request):
                 elif mode == 'testing':
                     response = regression.testing(dataset['features'])
 
+            elif task_type == 'pllaregression':
+                if mode == 'training':
+                    response = plLaRegression.training(
+                        dataset['features'], dataset['target_pl'], dataset['target_la'], cycle)
+                elif mode == 'testing':
+                    response = plLaRegression.testing(dataset['features'])
+
 
             return JsonResponse(response)
 
-        # If anything else then post request, send error message back
+        # If anything else then post request, send an error message back
         else:
             return JsonResponse({'message': 'only POST requests are allowed'})
 
