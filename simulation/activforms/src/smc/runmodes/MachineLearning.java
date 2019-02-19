@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -66,6 +67,8 @@ public class MachineLearning extends SMCConnector {
 	}
 
 	private void testing1Goal() {
+		Long startTime = System.currentTimeMillis();
+
 		// Send the adaptation options to the learner with mode testing, returns the predictions of the learner
 		JSONObject response = send(adaptationOptions, taskType, Mode.TESTING);
 
@@ -83,30 +86,52 @@ public class MachineLearning extends SMCConnector {
 		
 		Goal pl = goals.getPacketLossGoal();
 
-		int i = 0;
-		for (AdaptationOption option : adaptationOptions) {
-			if (adaptationSpace != 0) {
-				boolean prediction = taskType == TaskType.CLASSIFICATION ? predictions.get(i) == 1.0 :
+		// No exploration for single goal verification
+		List<Integer> overallIndices = new ArrayList<>();
+		List<Integer> remainingIndices = new ArrayList<>();
+
+		if (adaptationSpace != 0) {
+			for (int i = 0; i < adaptationOptions.size(); i++) {
+				boolean prediction = taskType == TaskType.CLASSIFICATION ? 
+					predictions.get(i) == 1.0 :
 					pl.evaluate(predictions.get(i));
-					
+				
 				if (prediction) {
-					smcChecker.checkCAO(option.toModelString(), environment.toModelString(),
-						option.verificationResults);
-					qosEstimates.add(option);
+					overallIndices.add(i);
 				} else {
-					option.verificationResults.packetLoss = 100;
+					remainingIndices.add(i);
 				}
-			} else {
-				// In case no options were predicted to meet the goals, verify all of them
-				smcChecker.checkCAO(option.toModelString(), environment.toModelString(),
-					option.verificationResults);
-				qosEstimates.add(option);
 			}
-			i++;
+		} else {
+			IntStream.range(0, adaptationOptions.size()).forEach(i -> overallIndices.add(i));
+		}
+
+		Collections.shuffle(overallIndices);
+
+		int lastIndex = 0;
+		int timeCap = ConfigLoader.getInstance().getTimeCap();
+		AdaptationOption option;
+
+		for (Integer index : overallIndices) {
+			if ((System.currentTimeMillis() - startTime) / 1000 > timeCap) {
+				break;
+			}
+			option = adaptationOptions.get(index);
+			smcChecker.checkCAO(option.toModelString(), environment.toModelString(),
+				option.verificationResults);
+			qosEstimates.add(option);
+			lastIndex++;
+		}
+		
+		for (int i = lastIndex; i < overallIndices.size(); i++) {
+			adaptationOptions.get(overallIndices.get(i)).verificationResults.packetLoss = 100;
+		}
+
+		for (Integer i : remainingIndices) {
+			adaptationOptions.get(i).verificationResults.packetLoss = 100;
 		}
 
 		// Perform online learning on the samples that were predicted to meet the user goal
-		// Note: if no samples were predicted to meet the goal, all the options are sent back for online learning
 		send(qosEstimates, taskType, Mode.TRAINING);
 	}
 
