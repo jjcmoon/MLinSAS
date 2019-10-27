@@ -1,5 +1,6 @@
 package mapek;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +22,10 @@ public class ManagedSystem {
 		for (Mote mote : motes) {
 			this.motes.put(mote.getMoteId(), mote);
 		}
+	}
+
+	public Collection<Mote> getMotes() {
+		return motes.values();
 	}
 
 	public void setMote(int moteId, Mote mote) {

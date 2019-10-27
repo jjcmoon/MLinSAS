@@ -16,28 +16,28 @@ def merge_all_files(pathToFiles):
 	}
 	i = 1
 	while True:
-		path = os.path.join(pathToFiles, f'dataset_with_all_features{i}.json')
+		path = os.path.join(pathToFiles, "dataset_with_all_features%d.json"%i)
 
-		if os.path.isfile(path):
-			print(f'Collecting data from cycle {i}')
-
-			with open(os.path.join(pathToFiles, f'dataset_with_all_features{i}.json'), 'r') as f:
-				currentData = json.load(f)
-
-			data['target_regression_energyconsumption'] += currentData['target_regression_energyconsumption']
-			data['target_regression_latency'] += currentData['target_regression_latency']
-			data['target_regression_packetloss'] += currentData['target_regression_packetloss']
-			data['target_classification_packetloss'] += currentData['target_classification_packetloss']
-			data['target_classification_latency'] += currentData['target_classification_latency']
-			data['features'] += currentData['features']
-			data['verification_times'] += currentData['verification_times']
-		
-			i += 1
-		else:
+		if not os.path.isfile(path):
 			break
 
+		print("Collecting data from cycle %d"%i)
 
-	with open(os.path.join(pathToFiles, 'dataset_with_all_features.json'), 'w') as f:
+		with open(os.path.join(pathToFiles, 'dataset_with_all_features%d.json'%i), 'r') as f:
+			currentData = json.load(f)
+
+		data['target_regression_energyconsumption'] += currentData['target_regression_energyconsumption']
+		data['target_regression_latency'] += currentData['target_regression_latency']
+		data['target_regression_packetloss'] += currentData['target_regression_packetloss']
+		data['target_classification_packetloss'] += currentData['target_classification_packetloss']
+		data['target_classification_latency'] += currentData['target_classification_latency']
+		data['features'] += currentData['features']
+		data['verification_times'] += currentData['verification_times']
+	
+		i += 1
+
+	outputFile = os.path.join(pathToFiles, 'dataset_with_all_features.json')
+	with open(outputFile, 'w') as f:
 		json.dump(data, f)
 
 

@@ -115,9 +115,10 @@ abstract public class SMCConnector {
 	}
 
 
-	public void setAdaptationOptions(List<AdaptationOption> adaptationOptions, Environment environment) {
+	public void setAdaptationOptions(List<AdaptationOption> adaptationOptions, Configuration configuration) {
 		this.adaptationOptions = adaptationOptions;
-		this.environment = environment;
+		this.configuration = configuration;
+		this.environment = configuration.environment;
 	}
 
 	public void verify() {
@@ -128,8 +129,18 @@ abstract public class SMCConnector {
 	abstract public void startVerification();
 
 
+    public static Stream<Mote> streamMotes(AdaptationOption option) {
+        return option.system.getMotes().stream();
+    }
 
-	/**
+    public static Stream<Link> streamLinks(AdaptationOption option) {
+        return streamMotes(option)
+                .map(Mote::getLinks)
+                .flatMap(Collection::stream);
+    }
+
+
+    /**
 	 * Prepare the adaptation options (their features and targets) for the machine learner.
 	 * @param adaptationOptions the options which should be prepared.
 	 * @param task the task type (which is necessary to decide the target).

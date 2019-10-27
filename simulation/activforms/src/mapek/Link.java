@@ -1,10 +1,10 @@
 package mapek;
 
 public class Link {
-	int source;
-	int destination;
-	int power;
-	int distribution;
+	public int source;
+	public int destination;
+	public int power;
+	public int distribution;
 
 	public int getSource() {
 		return source;
@@ -37,5 +37,10 @@ public class Link {
 		link.power = this.power;
 		link.distribution = this.distribution;
 		return link;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("%d->%d", source, destination);
 	}
 }

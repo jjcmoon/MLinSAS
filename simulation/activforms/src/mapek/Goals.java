@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import util.ConfigLoader;
 
+// Goals of system, singleton pattern
 public class Goals {
 
 	private static Goals instance = null;
@@ -39,6 +40,9 @@ public class Goals {
 		throw new RuntimeException(String.format("There is no %s goal present.", quality));
 	}
 	
+	/**
+	Returns whether an adaptation option is as good as the best adaptation option
+	*/
 	public boolean optimizeGoalEnergyConsumption(AdaptationOption bestAdaptationOption, AdaptationOption option) {
 		if (bestAdaptationOption == null)
 			return true;

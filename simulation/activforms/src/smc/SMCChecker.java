@@ -19,29 +19,28 @@ import mapek.Qualities;
 public class SMCChecker {
 
 
-	public static String command = Paths
+	private static String command = Paths
 		.get(System.getProperty("user.dir"), "uppaal-verifyta", "verifyta -a %f -E %f -u %s").toString();
 
 
-	SMCModelLoader modelLoader;
+	private SMCModelLoader modelLoader;
 
 	// The models used by Uppaal
-	List<SMCModel> models;
+	private List<SMCModel> models;
 
 	public SMCChecker() {
 		modelLoader = new SMCModelLoader();
 	}
 
-	ExecutorService cachedPool = Executors.newCachedThreadPool();
+	private ExecutorService cachedPool = Executors.newCachedThreadPool();
 
 	public List<SMCModel> getModels() {
 		return models;
 	}
 
 
-	public static String getCommand(String modelPath, double alpha, double epsilon) {
-		String cmd = String.format(command, alpha, epsilon, modelPath);
-		return cmd;
+	private static String getCommand(String modelPath, double alpha, double epsilon) {
+		return String.format(command, alpha, epsilon, modelPath);
 	}
 
 	static int getRuns(String string) {
@@ -109,7 +108,7 @@ public class SMCChecker {
 		}
 	}
 
-	static double getSimulatedValue(String string) {
+	private static double getSimulatedValue(String string) {
 		// find the last pair
 		int startingIndex = string.lastIndexOf("(") + 1;
 		int endIndex = string.lastIndexOf(")");
@@ -126,7 +125,7 @@ public class SMCChecker {
 	 * @param env the environment (moteloads, SNR's of links).
 	 * @return the quality model with changed configuration.
 	 */
-	static String changeCAO(String file, String cao, String env) {
+	private static String changeCAO(String file, String cao, String env) {
 
 		String startText = "//&lt;Configuration&gt;";
 		String endText = "//&lt;/Configuration&gt;";
@@ -146,7 +145,7 @@ public class SMCChecker {
 		return file;
 	}
 
-	static String changeText(String file, String startString, String endString, String newText) {
+	private static String changeText(String file, String startString, String endString, String newText) {
 
 		if (file.contains(startString)) {
 			int startIndex = file.indexOf(startString) + startString.length();
@@ -248,7 +247,7 @@ public class SMCChecker {
 		return model;
 	}
 
-	static double getProbability(String string) {
+	private static double getProbability(String string) {
 		String proability = getProbabilityBounds(string);
 		String[] strBounds = proability.split(",");
 		Double[] bounds = new Double[] { Double.parseDouble(strBounds[0]), Double.parseDouble(strBounds[1]) };
@@ -257,12 +256,12 @@ public class SMCChecker {
 		return avg;
 	}
 
-	static String getProbabilityBounds(String string) {
+	private static String getProbabilityBounds(String string) {
 		if (string.contains("Pr(<> ...) in [")) {
 			int index = string.indexOf("Pr(<> ...) in [") + "Pr(<> ...) in [".length();
-			String proability = string.substring(index, string.indexOf("]", index));
+			String probability = string.substring(index, string.indexOf("]", index));
 
-			return proability;
+			return probability;
 		} else {
 			throw new RuntimeException("Couldn't parse probability");
 		}

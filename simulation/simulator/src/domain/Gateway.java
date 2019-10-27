@@ -168,7 +168,11 @@ public class Gateway extends Node {
 				}
 			}
 		} else {
-			packetLoss = (double) Link.lostPackets / Link.sentPackets;
+			int totPackets = expectedPacketCount.get(runInfo.getRunNumber());
+			// If no packets are sent, there is no packet loss
+			if (totPackets==0)
+				return 0.;
+			packetLoss = (double) Link.lostPackets / totPackets;
 			Link.lostPackets = 0;
 			Link.sentPackets = 0;
 		}

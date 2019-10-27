@@ -12,4 +12,8 @@ public class SNREquation {
 		this.multiplier = multiplier;
 		this.constant = constant;
 	}
+
+	public double evaluate(int n) {
+		return this.multiplier * n + this.constant;
+	}
 }

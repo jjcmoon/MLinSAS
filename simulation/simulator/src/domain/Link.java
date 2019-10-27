@@ -31,12 +31,14 @@ public class Link {
 	void sendPacket(Packet packet, RunInfo runInfo) {
 		int packetLoss = calculatePacketLoss(runInfo);
 
-		// System.out.println(this + ": packetLoss" + packetLoss);
-		if (Math.random() * 100 + 1 > packetLoss) {
+		//System.out.println(this + ": packetLoss " + packetLoss);
+		double rand = Math.random() * 100 + 1;
+		//System.out.println(rand);
+		if (rand > packetLoss) {
 			sentPackets++;
 			to.receivePacket(packet, runInfo);
 		} else {
-//			 /System.out.println("packet is lost");
+			//System.out.println("packet is lost");
 			lostPackets++;
 			direction.reportPacketLost(packet);
 		}

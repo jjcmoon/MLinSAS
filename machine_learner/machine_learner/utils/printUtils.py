@@ -1,4 +1,8 @@
+import sys
 
+def printMsg(msg, pre="INFO"):
+    print(f"[{pre}]:", msg)
+    sys.stdout.flush()
 
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):

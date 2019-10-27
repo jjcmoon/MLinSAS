@@ -12,6 +12,7 @@ import deltaiot.client.Effector;
 import deltaiot.client.Probe;
 import deltaiot.services.LinkSettings;
 import deltaiot.services.QoS;
+import smc.runmodes.ProblogConnector;
 import smc.runmodes.SMCConnector;
 import smc.runmodes.SMCConnector.Mode;
 import smc.runmodes.SMCConnector.TaskType;
@@ -70,21 +71,26 @@ public class FeedbackLoop {
 		snrEquations = equations;
 	}
 
+	private LocalDateTime now;
+
+	private String getFTime() {
+		now = LocalDateTime.now();
+		return String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond());
+	}
+
 
 	public void start() {
-		System.out.println("Feedback loop started.");
+		System.out.println("Feedback loop started...");
 
-		LocalDateTime now;
 
 		// Run the mape-k loop and simulator for the specified amount of cycles
 		for (int i = 1; i <= ConfigLoader.getInstance().getAmountOfCycles(); i++) {
 		
 			if (!timeInReadableFormat) {
-				System.out.print(i + ";" + System.currentTimeMillis());
+				//System.out.println(i + ";" + System.currentTimeMillis());
 			} else {
 				now = LocalDateTime.now();
-				System.out.print(i + "; " + String.format("%02d:%02d:%02d", 
-					now.getHour(), now.getMinute(), now.getSecond()) + " ");
+				//System.out.println(i + "; " + getFTime() + " ");
 			}
 			
 			// Start the monitor part of the mapek loop
@@ -335,7 +341,8 @@ public class FeedbackLoop {
 	double getSNR(int source, int destination, int newPowerSetting) {
 		for (SNREquation equation : snrEquations) {
 			if (equation.source == source && equation.destination == destination) {
-				return equation.multiplier * newPowerSetting + equation.constant;
+				return equation.evaluate(newPowerSetting);
+				//return equation.multiplier * newPowerSetting + equation.constant;
 			}
 		}
 		throw new RuntimeException("Link not found:" + source + "-->" + destination);
@@ -343,6 +350,7 @@ public class FeedbackLoop {
 
 
 	boolean analysisRequired() {
+		// TODO: this always returns true
 		// for simulation we use adaptation after 4 periods
 		// return i++%4 == 0;
 
@@ -427,6 +435,11 @@ public class FeedbackLoop {
 			}
 		}
 
+		end_time = System.currentTimeMillis();
+		double delta = ((double)(end_time - start_time)) / 1000;
+
+		System.out.println(String.format("%f;%f;%f;%f", bestAdaptationOption.verificationResults.packetLoss, bestAdaptationOption.verificationResults.latency, bestAdaptationOption.verificationResults.energyConsumption, delta));
+
 		// Go through all links and construct the steps that have to be made to change to the best adaptation option
 		Link newLink, oldLink;
 		for (Mote mote : bestAdaptationOption.system.motes.values()) {
@@ -456,9 +469,9 @@ public class FeedbackLoop {
 		} else {
 			if (ConfigLoader.getInstance().timeInReadableFormat()) {
 				LocalDateTime now = LocalDateTime.now();
-				System.out.println("; " + String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond()));
+				//System.out.println("; " + String.format("%02d:%02d:%02d", now.getHour(), now.getMinute(), now.getSecond()));
 			} else {
-				System.out.println(";" + System.currentTimeMillis());
+				//System.out.println(";" + System.currentTimeMillis());
 			}
 		}
 	}
@@ -466,7 +479,6 @@ public class FeedbackLoop {
 
 	// Execute the steps which were composed by the planner if applicable
 	void execution() {
-
 		Set<Mote> motesEffected = new HashSet<>();
 
 		// Execute the planning steps, and keep track of the motes that will need changing
@@ -475,9 +487,9 @@ public class FeedbackLoop {
 			Mote mote = currentConfiguration.system.motes.get(link.getSource());
 			
 			if (step.step == Step.CHANGE_POWER) {
-				findLink(mote, link.getDestination()).setPower(step.value);
+			    mote.getLinkTo(link.getDestination()).setPower(step.value);
 			} else if (step.step == Step.CHANGE_DIST) {
-				findLink(mote, link.getDestination()).setDistribution(step.value);
+				mote.getLinkTo(link.getDestination()).setDistribution(step.value);
 			}
 			motesEffected.add(mote);
 		}
@@ -493,7 +505,7 @@ public class FeedbackLoop {
 
 				// add a new linksettings object containing the source mote id, the dest id, the (new) power of the link,
 				//  the (new) distribution of the link and the link spreading as zero to the newsetting list.
-				newSettings.add(newLinkSettings(mote.getMoteId(), link.getDestination(), link.getPower(),
+				newSettings.add(new LinkSettings(mote.getMoteId(), link.getDestination(), link.getPower(),
 						link.getDistribution(), 0));
 			}
 
@@ -504,50 +516,12 @@ public class FeedbackLoop {
 		steps.clear();
 
 		if (!timeInReadableFormat) {
-			System.out.print(";" + System.currentTimeMillis() + "\n");
+			//System.out.print(";" + System.currentTimeMillis() + "\n");
 		} else {
 			LocalDateTime now = LocalDateTime.now();
-			System.out.print("; " + String.format("%02d:%02d:%02d", 
-				now.getHour(), now.getMinute(), now.getSecond()) + "\n");
+			//System.out.print("; " + String.format("%02d:%02d:%02d",
+			//	now.getHour(), now.getMinute(), now.getSecond()) + "\n");
 		}
 	}
 
-
-	// Returns the link from mote to dest
-	Link findLink(Mote mote, int dest) {
-		for (Link link : mote.getLinks()) {
-			if (link.getDestination() == dest)
-				return link;
-		}
-		throw new RuntimeException(String.format("Link %d --> %d not found", mote.getMoteId(), dest));
-	}
-
-
-	// returns a link settings object with the given parameters as arguments.
-	public LinkSettings newLinkSettings(int src, int dest, int power, int distribution, int sf) {
-		LinkSettings settings = new LinkSettings();
-		settings.setSrc(src);
-		settings.setDest(dest);
-		settings.setPowerSettings(power);
-		settings.setDistributionFactor(distribution);
-		settings.setSpreadingFactor(sf);
-		return settings;
-	}
-
-	// dont know where this get used
-	void printMote(Mote mote) {
-		System.out.println(String.format("MoteId: %d, BatteryRemaining: %f, Links:%s", mote.getMoteId(),
-				mote.getEnergyLevel(), getLinkString(mote.getLinks())));
-	}
-
-	
-	// dont know where this gets used
-	String getLinkString(List<Link> links) {
-		StringBuilder strBuilder = new StringBuilder();
-		for (Link link : links) {
-			strBuilder.append(String.format("[Dest: %d, Power:%d, DistributionFactor:%d]", link.getDestination(),
-					link.getPower(), link.getDistribution()));
-		}
-		return strBuilder.toString();
-	}
 }

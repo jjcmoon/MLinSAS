@@ -107,20 +107,9 @@ public class Mote extends Node {
 	 * on the number of packets send
 	 */
 	public void handleTurn(RunInfo runInfo, int timeSlots) {
-		// System.out.println("Turn: " + this);
 		// Create your own packets
 		List<Packet> myPackets = new ArrayList<>(); // empty if none send
 
-		// Create your own packets
-		// for (int i = 0; i < load; i++) {
-		// if (Math.random() < activationProbability.get(runInfo.getRunNumber())) {
-		// lastPacketNumber++;
-		// myPackets.add(new Packet(this, null, lastPacketNumber,
-		// runInfo.getRunNumber()));
-		// }
-		// }
-
-		// New Logic to create exact packets
 		int packetsToGenerate = (int) Math.round(load * activationProbability.get(runInfo.getRunNumber()));
 		for (int i = 0; i < packetsToGenerate; i++) {
 			lastPacketNumber++;

@@ -35,9 +35,14 @@ public class SimulationClient implements Probe, Effector {
 		this.simulator = simulator;
 	}
 
+	public void simulate() {
+		simulator.doSingleRun();
+	}
+
 	@Override
 	public ArrayList<deltaiot.services.Mote> getAllMotes() {
-		simulator.doSingleRun();
+		// TODO: remove
+		simulate();
 		List<Mote> motes = simulator.getMotes();
 		ArrayList<deltaiot.services.Mote> afMotes = new ArrayList<>();
 		for (Mote mote : motes) {

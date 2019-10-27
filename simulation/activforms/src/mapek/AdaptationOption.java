@@ -1,6 +1,9 @@
 package mapek;
 
 import com.google.gson.Gson;
+import smc.runmodes.SMCConnector;
+
+import java.util.List;
 
 public class AdaptationOption {
 	public ManagedSystem system;
@@ -12,7 +15,7 @@ public class AdaptationOption {
 	// Boolean which indicates if this option is verified
 	public boolean isVerified = false;
 
-	protected AdaptationOption getCopy() {
+	public AdaptationOption getCopy() {
 		AdaptationOption newOption = new AdaptationOption();
 		newOption.system = system.getCopy();
 		newOption.verificationResults = verificationResults.getCopy();
@@ -25,6 +28,10 @@ public class AdaptationOption {
 	public String toString() {
 		Gson gsn = new Gson();
 		return gsn.toJson(this);
+	}
+
+	public boolean equals(AdaptationOption other) {
+		return this.toModelString().equals(other.toModelString());
 	}
 
 	public String toModelString() {

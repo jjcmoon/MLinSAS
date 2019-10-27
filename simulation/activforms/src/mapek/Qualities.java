@@ -12,4 +12,8 @@ public class Qualities {
 		qualities.latency = this.energyConsumption;
 		return qualities;
 	}
+
+	public String toString() {
+		return Double.toString(packetLoss) + ";" + Double.toString(latency) + ";" + Double.toString(energyConsumption);
+	}
 }

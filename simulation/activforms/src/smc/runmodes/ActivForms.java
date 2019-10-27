@@ -85,10 +85,8 @@ public class ActivForms extends SMCConnector {
 				JSONArray newFeatures = new JSONArray();
 
 				// Collection of all the features: SNR - Power setting - Distribution - Traffic probability
-				for (SNR snr : env.linksSNR) {
-					newFeatures.put((int) snr.SNR);
-				}
-				
+				env.linksSNR.forEach(snr -> newFeatures.put((int) snr.SNR));
+
 				option.system.motes.values().stream()
 					.map(mote -> mote.getLinks())
 					.flatMap(links -> links.stream())
@@ -103,6 +101,10 @@ public class ActivForms extends SMCConnector {
 				for (TrafficProbability traffic : env.motesLoad) {
 					newFeatures.put((int) traffic.load);
 				}
+
+				option.system.motes.values().stream()
+						.map(mote -> mote.getQueueSize())
+						.forEach(QS -> newFeatures.put(QS));
 				
 				// Features
 				root.getJSONArray("features").put(newFeatures);

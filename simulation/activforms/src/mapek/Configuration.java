@@ -3,13 +3,13 @@ package mapek;
 // This class holds all the motes and general information (noise, topology, ...) of the network.
 public class Configuration {
 
-	ManagedSystem system;
+	public ManagedSystem system;
 
 	// The environment contains the SNR on a given link and the load.
-	Environment environment;
+	public Environment environment;
 
 	// An object holding single qualities.
-	Qualities qualities;
+	public Qualities qualities;
 
 	public Configuration() {
 		system = new ManagedSystem();

@@ -23,9 +23,33 @@ public class Mote {
 		return links.get(index);
 	}
 
+	public Link getLinkTo(int index) {
+		for (Link link : links) {
+			if (link.destination == index) {
+				return link;
+			}
+		}
+		return null;
+	}
+
+	public Link getAltLinkTo(int index) {
+		for (Link link: links) {
+			if (link.destination != index) {
+				return link;
+			}
+		}
+		return null;
+	}
+
 	public double getEnergyLevel() {
 		return energyLevel;
 	}
+
+	public int getLoad() {return load;}
+
+	public int getQueueSize() {
+	    return queueSize;
+    }
 
 	public Mote getCopy() {
 		Mote mote = new Mote();
